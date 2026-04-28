@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Poker Tracker">
+<title>Poker Tournament Tracker 2026</title>
+<style>
+  :root {
+    --wsop:     #ffffff;
+    --wsop-sat: #f2f2f2;
+    --venetian: #d0edcf;
+    --ven-sat:  #e5f5e4;
+    --wynn:     #ffedaa;
+    --wynn-sat: #fff5cc;
+    --wsopc:    #d6eaf8;
+    --wsopc-sat:#eaf4fb;
+    --aria:     #f5e6f8;
+    --aria-sat: #faf0fc;
+    --plo:      #ffe0c0;
+    --navy:     #1a3a5c;
+    --green:    #2d6a2d;
+    --red:      #8b0000;
+    --bg:       #f0f4f8;
+    --card:     #ffffff;
+    --border:   #dde3ea;
+    --text:     #1a1a2e;
+    --muted:    #6b7a8d;
+    --radius:   14px;
+    --shadow:   0 2px 12px rgba(0,0,0,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 80px;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--navy);
+    color: white;
+    padding: 18px 20px 14px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  }
+  header h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+  header p  { font-size: 12px; opacity: 0.65; margin-top: 2px; }
+
+  /* ── Totals bar ── */
+  #totals-bar {
+    background: var(--navy);
+    padding: 0 20px 14px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .total-pill {
+    background: rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 12px;
+    color: white;
+    font-weight: 600;
+  }
+  .total-pill span { opacity: 0.7; font-weight: 400; margin-right: 4px; }
+  .total-pill.profit { background: rgba(100,200,100,0.25); }
+  .total-pill.loss   { background: rgba(220,80,80,0.25); }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex;
+    background: white;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 82px;
+    z-index: 90;
+  }
+  .tab {
+    flex: 1;
+    padding: 12px 0;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+  }
+  .tab.active {
+    color: var(--navy);
+    border-bottom-color: var(--navy);
+  }
+
+  /* ── Panels ── */
+  .panel { display: none; padding: 16px; }
+  .panel.active { display: block; }
+
+  /* ── Card ── */
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 14px;
+  }
+
+  /* ── Form ── */
+  .field { margin-bottom: 14px; }
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .field input,
+  .field select,
+  .field textarea {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 16px; /* prevents iOS zoom */
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    background: white;
+    color: var(--text);
+    -webkit-appearance: none;
+    appearance: none;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .field input:focus,
+  .field select:focus,
+  .field textarea:focus { border-color: var(--navy); }
+
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .row-3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; }
+
+  /* Total Spent display */
+  .total-display {
+    background: #dff0d8;
+    border: 1.5px solid #a8d5a2;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--green);
+    text-align: center;
+    letter-spacing: -0.5px;
+  }
+
+  /* ── Buttons ── */
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    letter-spacing: -0.2px;
+  }
+  .btn:active { opacity: 0.8; transform: scale(0.98); }
+  .btn-primary { background: var(--navy); color: white; }
+  .btn-secondary {
+    background: transparent;
+    color: var(--muted);
+    border: 1.5px solid var(--border);
+    font-size: 14px;
+    padding: 12px;
+    margin-top: 8px;
+  }
+  .btn-export {
+    background: #2d6a2d;
+    color: white;
+    font-size: 14px;
+    padding: 12px;
+    margin-top: 0;
+  }
+
+  /* ── History list ── */
+  .entry-card {
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    border-left: 5px solid transparent;
+    position: relative;
+  }
+  .entry-card.WSOP     { background: var(--wsop);     border-left-color: #aaa; }
+  .entry-card.Venetian { background: var(--venetian); border-left-color: #5a9a5a; }
+  .entry-card.Wynn     { background: var(--wynn);     border-left-color: #c8a800; }
+  .entry-card.WSOPC    { background: var(--wsopc);    border-left-color: #2471a3; }
+  .entry-card.ARIA     { background: var(--aria);     border-left-color: #8e44ad; }
+  .entry-card.sat      { opacity: 0.85; }
+  .entry-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 4px;
+  }
+  .entry-name { font-size: 15px; font-weight: 600; flex: 1; padding-right: 10px; line-height: 1.3; }
+  .entry-spent { font-size: 17px; font-weight: 700; color: var(--navy); white-space: nowrap; }
+  .entry-meta  { font-size: 12px; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(26,58,92,0.1);
+    color: var(--navy);
+  }
+  .entry-net-positive { color: var(--green); font-weight: 700; }
+  .entry-net-negative { color: var(--red);   font-weight: 700; }
+
+  .delete-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    color: #ccc;
+    padding: 4px;
+    line-height: 1;
+  }
+  .delete-btn:active { color: var(--red); }
+
+  /* ── Summary ── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .stat-box {
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+  }
+  .stat-box .stat-val {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--navy);
+    letter-spacing: -0.5px;
+  }
+  .stat-box .stat-lbl {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 3px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .stat-box.profit .stat-val { color: var(--green); }
+  .stat-box.loss   .stat-val { color: var(--red); }
+
+  .loc-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .loc-row:last-child { border-bottom: none; }
+  .loc-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+  }
+  .empty-state .emoji { font-size: 40px; margin-bottom: 10px; }
+  .empty-state p { font-size: 15px; }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #1a1a2e;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 999;
+    transition: transform 0.3s ease;
+    white-space: nowrap;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🃏 Poker Tournament Tracker</h1>
+  <p>2026 Las Vegas Series · WSOPC Commerce · ARIA</p>
+</header>
+
+<div id="totals-bar">
+  <div class="total-pill"><span>Entries</span><span id="t-count">0</span></div>
+  <div class="total-pill"><span>Spent</span><span id="t-spent">$0</span></div>
+  <div class="total-pill" id="t-net-pill"><span>Net</span><span id="t-net">—</span></div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('add')">➕ Add Entry</div>
+  <div class="tab" onclick="switchTab('history')">📋 History</div>
+  <div class="tab" onclick="switchTab('summary')">📊 Summary</div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- ADD ENTRY TAB                          -->
+<!-- ══════════════════════════════════════ -->
+<div class="panel active" id="panel-add">
+  <div class="card">
+    <div class="card-title">Tournament Info</div>
+
+    <div class="row-2">
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="f-date" onchange="onDateChange()">
+      </div>
+      <div class="field">
+        <label>Location</label>
+        <select id="f-loc">
+          <option>WSOP</option>
+          <option>Venetian</option>
+          <option>Wynn</option>
+          <option>WSOPC</option>
+          <option>ARIA</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Event Picker — appears when selected date has scheduled events -->
+    <div id="event-picker-wrap" style="display:none; margin-bottom:4px;">
+      <div class="field" style="margin-bottom:4px">
+        <label>Pick from Schedule</label>
+        <select id="event-select" onchange="onEventPick()"
+          style="font-size:15px; padding:12px 14px; width:100%;
+                 border:2px solid var(--navy); border-radius:10px;
+                 background:#f0f6ff; color:var(--navy); font-weight:600;
+                 -webkit-appearance:none;">
+          <option value="">— browse &amp; pick an event —</option>
+        </select>
+      </div>
+      <div id="gtd-info"   style="display:none; font-size:12px; color:#2d6a2d; font-weight:600; padding:2px 6px 4px;"></div>
+      <div id="feeds-info" style="display:none; font-size:12px; color:#7a5a00; font-weight:600; padding:2px 6px 6px;"></div>
+    </div>
+
+    <div class="row-2">
+      <div class="field">
+        <label>Event #</label>
+        <input type="text" id="f-evnum" placeholder="e.g. #82">
+      </div>
+      <div class="field">
+        <label>Type</label>
+        <select id="f-type">
+          <option>Tournament</option>
+          <option>Satellite</option>
+          <option>Double Board PLO</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Event Name</label>
+      <input type="text" id="f-name" placeholder="e.g. No-Limit Hold'em Main Event">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Buy-In</div>
+
+    <div class="row-2">
+      <div class="field">
+        <label>Buy-In ($)</label>
+        <input type="number" id="f-buyin" placeholder="0" inputmode="decimal" min="0" step="any" oninput="calcTotal()">
+      </div>
+      <div class="field">
+        <label>Re-Entries</label>
+        <input type="number" id="f-reentries" placeholder="0" inputmode="numeric" min="0" value="0" oninput="calcTotal()">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Total Spent</label>
+      <div class="total-display" id="total-display">$0.00</div>
+    </div>
+
+    <div class="field">
+      <label>Result ($) &nbsp;<span style="font-weight:400;text-transform:none">— fill in when you cash</span></label>
+      <input type="number" id="f-result" placeholder="leave blank if not cashed" inputmode="decimal" min="0" step="any">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Notes (optional)</div>
+    <div class="field" style="margin-bottom:0">
+      <textarea id="f-notes" rows="2" placeholder="Table #, bounties, anything notable…"
+        style="resize:none; font-size:16px;"></textarea>
+    </div>
+  </div>
+
+  <button class="btn btn-primary" onclick="saveEntry()">💾 &nbsp;Save Entry</button>
+  <button class="btn btn-secondary" onclick="clearForm()">Clear Form</button>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- HISTORY TAB                            -->
+<!-- ══════════════════════════════════════ -->
+<div class="panel" id="panel-history">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <div style="font-size:13px; color:var(--muted); font-weight:600;">
+      <span id="hist-count">0</span> entries — newest first
+    </div>
+    <button class="btn btn-export" style="width:auto; padding:8px 14px;"
+            onclick="exportCSV()">⬇ Export CSV</button>
+  </div>
+  <div id="history-list"></div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- SUMMARY TAB                            -->
+<!-- ══════════════════════════════════════ -->
+<div class="panel" id="panel-summary">
+  <div class="card">
+    <div class="card-title">Overall</div>
+    <div class="stat-grid">
+      <div class="stat-box">
+        <div class="stat-val" id="s-entries">0</div>
+        <div class="stat-lbl">Entries</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="s-spent">$0</div>
+        <div class="stat-lbl">Total Spent</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="s-result">$0</div>
+        <div class="stat-lbl">Total Cashed</div>
+      </div>
+      <div class="stat-box" id="s-net-box">
+        <div class="stat-val" id="s-net">—</div>
+        <div class="stat-lbl">Net P/L</div>
+      </div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-box">
+        <div class="stat-val" id="s-cashes">0</div>
+        <div class="stat-lbl">Cashes</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="s-roi">—</div>
+        <div class="stat-lbl">ROI</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">By Location</div>
+    <div id="summary-loc"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">By Type</div>
+    <div id="summary-type"></div>
+  </div>
+
+  <button class="btn btn-export" onclick="exportCSV()">⬇ Export CSV</button>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── Storage ──────────────────────────────────────
+const KEY = "poker_tracker_2026";
+
+function load() {
+  try { return JSON.parse(localStorage.getItem(KEY)) || []; }
+  catch { return []; }
+}
+function save(data) {
+  localStorage.setItem(KEY, JSON.stringify(data));
+}
+
+// ── Helpers ──────────────────────────────────────
+function fmt(n) {
+  if (n === null || n === undefined || n === "") return "—";
+  return "$" + parseFloat(n).toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function fmtShort(n) {
+  if (n === null || n === undefined || n === "") return "—";
+  const v = Math.abs(parseFloat(n));
+  if (v >= 1000) return "$" + (v/1000).toFixed(1) + "k";
+  return "$" + v.toFixed(0);
+}
+function today() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+// ── Tabs ─────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll(".tab").forEach((t,i) => {
+    t.classList.toggle("active", ["add","history","summary"][i] === name);
+  });
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  document.getElementById("panel-" + name).classList.add("active");
+  if (name === "history")  renderHistory();
+  if (name === "summary")  renderSummary();
+}
+
+// ── Form logic ────────────────────────────────────
+function calcTotal() {
+  const buyin = parseFloat(document.getElementById("f-buyin").value) || 0;
+  const re    = parseInt(document.getElementById("f-reentries").value) || 0;
+  const total = buyin * (1 + re);
+  document.getElementById("total-display").textContent = fmt(total);
+}
+
+function clearForm() {
+  document.getElementById("f-date").value      = today();
+  document.getElementById("f-loc").value       = "WSOP";
+  document.getElementById("f-evnum").value     = "";
+  document.getElementById("f-type").value      = "Tournament";
+  document.getElementById("f-name").value      = "";
+  document.getElementById("f-buyin").value     = "";
+  document.getElementById("f-reentries").value = "0";
+  document.getElementById("f-result").value    = "";
+  document.getElementById("f-notes").value     = "";
+  document.getElementById("total-display").textContent = "$0.00";
+}
+
+function saveEntry() {
+  const name  = document.getElementById("f-name").value.trim();
+  const buyin = parseFloat(document.getElementById("f-buyin").value);
+
+  if (!name)         { showToast("⚠️ Please enter the event name"); return; }
+  if (isNaN(buyin))  { showToast("⚠️ Please enter the buy-in amount"); return; }
+
+  const re     = parseInt(document.getElementById("f-reentries").value) || 0;
+  const total  = buyin * (1 + re);
+  const result = document.getElementById("f-result").value.trim();
+
+  const entry = {
+    id:       Date.now(),
+    date:     document.getElementById("f-date").value || today(),
+    loc:      document.getElementById("f-loc").value,
+    evnum:    document.getElementById("f-evnum").value.trim(),
+    type:     document.getElementById("f-type").value,
+    name:     name,
+    buyin:    buyin,
+    reentries:re,
+    total:    total,
+    result:   result !== "" ? parseFloat(result) : null,
+    net:      result !== "" ? parseFloat(result) - total : null,
+    notes:    document.getElementById("f-notes").value.trim(),
+  };
+
+  const data = load();
+  data.push(entry);
+  save(data);
+  updateTotalsBar();
+  showToast("✅ Entry saved!");
+  clearForm();
+}
+
+function deleteEntry(id) {
+  if (!confirm("Delete this entry?")) return;
+  const data = load().filter(e => e.id !== id);
+  save(data);
+  updateTotalsBar();
+  renderHistory();
+  renderSummary();
+}
+
+// ── Totals bar ────────────────────────────────────
+function updateTotalsBar() {
+  const data   = load();
+  const spent  = data.reduce((s,e) => s + (e.total||0), 0);
+  const result = data.reduce((s,e) => s + (e.result||0), 0);
+  const net    = data.reduce((s,e) => s + (e.net||0), 0);
+
+  document.getElementById("t-count").textContent = data.length;
+  document.getElementById("t-spent").textContent = fmtShort(spent);
+
+  const hasNet = data.some(e => e.net !== null);
+  const pill   = document.getElementById("t-net-pill");
+  document.getElementById("t-net").textContent = hasNet ? (net >= 0 ? "+" : "") + fmtShort(net) : "—";
+  pill.className = "total-pill" + (hasNet ? (net >= 0 ? " profit" : " loss") : "");
+}
+
+// ── History ───────────────────────────────────────
+function renderHistory() {
+  const data = [...load()].reverse();
+  const el   = document.getElementById("history-list");
+  document.getElementById("hist-count").textContent = data.length;
+
+  if (!data.length) {
+    el.innerHTML = `<div class="empty-state"><div class="emoji">🃏</div><p>No entries yet.<br>Add your first buy-in!</p></div>`;
+    return;
+  }
+
+  el.innerHTML = data.map(e => {
+    const netHtml = e.net !== null
+      ? `<span class="${e.net >= 0 ? "entry-net-positive" : "entry-net-negative"}">
+           Net: ${e.net >= 0 ? "+" : ""}${fmt(e.net)}
+         </span>`
+      : "";
+    const resultHtml = e.result !== null ? `Result: ${fmt(e.result)}  ` : "";
+    const reHtml = e.reentries > 0 ? `${e.reentries} re-entr${e.reentries>1?"ies":"y"}  ` : "";
+    const notesHtml = e.notes ? `<div style="font-size:12px;color:var(--muted);margin-top:5px;font-style:italic">${e.notes}</div>` : "";
+    return `
+    <div class="entry-card ${e.loc} ${e.type==="Satellite"?"sat":""}">
+      <button class="delete-btn" onclick="deleteEntry(${e.id})" title="Delete">✕</button>
+      <div class="entry-top">
+        <div class="entry-name">${e.name}</div>
+        <div class="entry-spent">${fmt(e.total)}</div>
+      </div>
+      <div class="entry-meta">
+        <span>${e.date}</span>
+        <span class="badge">${e.loc}</span>
+        <span class="badge">${e.type}</span>
+        ${e.evnum ? `<span>#${e.evnum}</span>` : ""}
+        ${reHtml}
+        ${resultHtml}
+        ${netHtml}
+      </div>
+      ${notesHtml}
+    </div>`;
+  }).join("");
+}
+
+// ── Summary ───────────────────────────────────────
+function renderSummary() {
+  const data = load();
+  const spent  = data.reduce((s,e) => s + (e.total||0), 0);
+  const result = data.reduce((s,e) => s + (e.result||0), 0);
+  const net    = data.reduce((s,e) => s + (e.net||0), 0);
+  const cashes = data.filter(e => e.net !== null && e.result > 0).length;
+  const hasNet = data.some(e => e.net !== null);
+  const roi    = hasNet && spent > 0 ? ((net / spent) * 100).toFixed(1) + "%" : "—";
+
+  document.getElementById("s-entries").textContent = data.length;
+  document.getElementById("s-spent").textContent   = fmt(spent);
+  document.getElementById("s-result").textContent  = result > 0 ? fmt(result) : "—";
+  document.getElementById("s-cashes").textContent  = cashes;
+  document.getElementById("s-roi").textContent     = roi;
+
+  const netBox = document.getElementById("s-net-box");
+  document.getElementById("s-net").textContent = hasNet ? (net >= 0 ? "+" : "") + fmt(net) : "—";
+  netBox.className = "stat-box" + (hasNet ? (net >= 0 ? " profit" : " loss") : "");
+
+  // By location
+  const locs = ["WSOP","Venetian","Wynn","WSOPC","ARIA"];
+  const locColors = { WSOP:"#aaa", Venetian:"#5a9a5a", Wynn:"#c8a800", WSOPC:"#2471a3", ARIA:"#8e44ad" };
+  const byLoc = {};
+  locs.forEach(l => byLoc[l] = {count:0, spent:0, result:0, net:0, hasNet:false});
+  data.forEach(e => {
+    if (!byLoc[e.loc]) return;
+    byLoc[e.loc].count++;
+    byLoc[e.loc].spent += e.total||0;
+    if (e.net !== null) {
+      byLoc[e.loc].result += e.result||0;
+      byLoc[e.loc].net    += e.net;
+      byLoc[e.loc].hasNet  = true;
+    }
+  });
+  document.getElementById("summary-loc").innerHTML = locs
+    .filter(l => byLoc[l].count > 0)
+    .map(l => {
+      const d = byLoc[l];
+      const netStr = d.hasNet
+        ? `<span class="${d.net>=0?"entry-net-positive":"entry-net-negative"}">${d.net>=0?"+":""}${fmt(d.net)}</span>`
+        : `<span style="color:var(--muted)">—</span>`;
+      return `<div class="loc-row">
+        <div><span class="loc-dot" style="background:${locColors[l]}"></span><strong>${l}</strong>
+          <span style="color:var(--muted);font-size:12px"> · ${d.count} entr${d.count>1?"ies":"y"}</span>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:14px;font-weight:600">${fmt(d.spent)}</div>
+          <div style="font-size:12px">${netStr}</div>
+        </div>
+      </div>`;
+    }).join("") || `<div style="color:var(--muted);font-size:14px;padding:10px 0">No data yet</div>`;
+
+  // By type
+  const types = ["Tournament","Satellite","Double Board PLO"];
+  const byType = {};
+  types.forEach(t => byType[t] = {count:0, spent:0});
+  data.forEach(e => {
+    if (!byType[e.type]) byType[e.type] = {count:0, spent:0};
+    byType[e.type].count++;
+    byType[e.type].spent += e.total||0;
+  });
+  document.getElementById("summary-type").innerHTML = Object.entries(byType)
+    .filter(([,d]) => d.count > 0)
+    .map(([t,d]) => `<div class="loc-row">
+        <div><strong>${t}</strong>
+          <span style="color:var(--muted);font-size:12px"> · ${d.count} entr${d.count>1?"ies":"y"}</span>
+        </div>
+        <div style="font-weight:600">${fmt(d.spent)}</div>
+      </div>`
+    ).join("") || `<div style="color:var(--muted);font-size:14px;padding:10px 0">No data yet</div>`;
+}
+
+// ── Export CSV ────────────────────────────────────
+function exportCSV() {
+  const data = load();
+  if (!data.length) { showToast("No data to export"); return; }
+  const header = "Date,Location,Event #,Type,Event Name,Buy-In,Re-Entries,Total Spent,Result,Net,Notes";
+  const rows = data.map(e => [
+    e.date, e.loc, e.evnum, e.type,
+    `"${e.name.replace(/"/g,'""')}"`,
+    e.buyin, e.reentries, e.total,
+    e.result ?? "", e.net ?? "",
+    `"${(e.notes||"").replace(/"/g,'""')}"`
+  ].join(","));
+  const csv  = [header, ...rows].join("\n");
+  const blob = new Blob([csv], {type:"text/csv"});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href     = url;
+  a.download = "poker_tracker_2026.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast("📥 CSV downloaded!");
+}
+
+// ── Toast ─────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 2500);
+}
+
+// ── Schedule Data ────────────────────────────────
+const SCHEDULE = [{"date":"2026-05-18","time":"11:10 AM","evnum":"1","name":"$600 No Limit Hold'em 1A","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$150K GTD","feeds":""},{"date":"2026-05-21","time":"11:10 AM","evnum":"5","name":"$600 No Limit Hold'em","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$30K GTD","feeds":""},{"date":"2026-05-21","time":"12 PM","evnum":"","name":"No Limit Hold'em Day 1A","loc":"Wynn","type":"Tournament","buyin":600.0,"gtd":"$500K GTD","feeds":""},{"date":"2026-05-21","time":"6 PM","evnum":"","name":"No Limit Hold'em Day 1B Turbo","loc":"Wynn","type":"Tournament","buyin":600.0,"gtd":"$500K GTD","feeds":""},{"date":"2026-05-22","time":"11:10 AM","evnum":"7","name":"$600 No Limit Hold'em","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$30K GTD","feeds":""},{"date":"2026-05-22","time":"12 PM","evnum":"","name":"No Limit Hold'em Day 1C","loc":"Wynn","type":"Tournament","buyin":600.0,"gtd":"$500K GTD","feeds":""},{"date":"2026-05-22","time":"6 PM","evnum":"","name":"No Limit Hold'em Day 1D Turbo","loc":"Wynn","type":"Tournament","buyin":600.0,"gtd":"$500K GTD","feeds":""},{"date":"2026-05-23","time":"6:10 PM","evnum":"11","name":"$250 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":250.0,"gtd":"$15K GTD","feeds":""},{"date":"2026-05-23","time":"12 PM","evnum":"","name":"No Limit Hold'em Day 1E","loc":"Wynn","type":"Tournament","buyin":600.0,"gtd":"$500K GTD","feeds":""},{"date":"2026-05-23","time":"6 PM","evnum":"","name":"No Limit Hold'em Day 1F Turbo","loc":"Wynn","type":"Tournament","buyin":600.0,"gtd":"$500K GTD","feeds":""},{"date":"2026-05-24","time":"6:10 PM","evnum":"12","name":"$250 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":250.0,"gtd":"$15K GTD","feeds":""},{"date":"2026-05-24","time":"12 PM","evnum":"","name":"No Limit Hold'em Day 1A","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$1M GTD","feeds":""},{"date":"2026-05-24","time":"6 PM","evnum":"","name":"No Limit Hold'em Day 1B Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$1M GTD","feeds":""},{"date":"2026-05-25","time":"6:10 PM","evnum":"14","name":"$250 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":250.0,"gtd":"$15K GTD","feeds":""},{"date":"2026-05-25","time":"12 PM","evnum":"","name":"No Limit Hold'em Day 1C","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$1M GTD","feeds":""},{"date":"2026-05-25","time":"6 PM","evnum":"","name":"No Limit Hold'em Day 1D Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$1M GTD","feeds":""},{"date":"2026-05-26","time":"11:10 AM","evnum":"15","name":"$600 No Limit Hold'em","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$40K GTD","feeds":""},{"date":"2026-05-26","time":"6:10 PM","evnum":"16","name":"$250 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":250.0,"gtd":"$15K GTD","feeds":""},{"date":"2026-05-26","time":"12 PM","evnum":"#1","name":"Mini Mystery Millions - No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":550.0,"gtd":"","feeds":""},{"date":"2026-05-26","time":"2 PM","evnum":"#2","name":"8-Handed No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":5000.0,"gtd":"","feeds":""},{"date":"2026-05-26","time":"12 PM","evnum":"","name":"$70 Warmup Landmark Satellite","loc":"WSOP","type":"Satellite","buyin":70.0,"gtd":"Seat","feeds":"\u2192 Mini Mystery Millions NLH ($550)"},{"date":"2026-05-26","time":"3 PM","evnum":"","name":"$240 NLH Landmark Satellite (Daily)","loc":"WSOP","type":"Satellite","buyin":240.0,"gtd":"Seat","feeds":"\u2192 Various NLH events (daily)"},{"date":"2026-05-26","time":"7 PM","evnum":"","name":"$585 NLH Landmark Satellite (Daily)","loc":"WSOP","type":"Satellite","buyin":585.0,"gtd":"Seat","feeds":"\u2192 Various NLH events (daily)"},{"date":"2026-05-26","time":"10 PM","evnum":"","name":"$135 NLH Landmark Satellite (Daily)","loc":"WSOP","type":"Satellite","buyin":135.0,"gtd":"Seat","feeds":"\u2192 Various NLH events (daily)"},{"date":"2026-05-26","time":"12 PM","evnum":"","name":"No Limit Hold'em Day 1E","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$1M GTD","feeds":""},{"date":"2026-05-26","time":"6 PM","evnum":"","name":"No Limit Hold'em Day 1F Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$1M GTD","feeds":""},{"date":"2026-05-27","time":"11:10 AM","evnum":"17","name":"$600 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$40K GTD","feeds":""},{"date":"2026-05-27","time":"6:10 PM","evnum":"18","name":"$250 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":250.0,"gtd":"$15K GTD","feeds":""},{"date":"2026-05-27","time":"12 PM","evnum":"#3","name":"Industry Employees No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":500.0,"gtd":"","feeds":""},{"date":"2026-05-27","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":600.0,"gtd":"$50K GTD","feeds":""},{"date":"2026-05-28","time":"11:10 AM","evnum":"19","name":"$600 No Limit Hold'em","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$40K GTD","feeds":""},{"date":"2026-05-28","time":"6:10 PM","evnum":"21","name":"$400 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":400.0,"gtd":"$25K GTD","feeds":""},{"date":"2026-05-28","time":"6 PM","evnum":"","name":"$2,750 Heads-Up NLH Mega Satellite","loc":"WSOP","type":"Satellite","buyin":2750.0,"gtd":"1 Seat/$25K","feeds":"\u2192 Heads-Up NLH Championship ($25,000)"},{"date":"2026-05-28","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$100K GTD","feeds":""},{"date":"2026-05-29","time":"11:10 AM","evnum":"22","name":"$600 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$40K GTD","feeds":""},{"date":"2026-05-29","time":"6:10 PM","evnum":"24","name":"$400 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":400.0,"gtd":"$25K GTD","feeds":""},{"date":"2026-05-29","time":"12 PM","evnum":"#7","name":"Heads Up No-Limit Hold'em Championship","loc":"WSOP","type":"Tournament","buyin":25000.0,"gtd":"","feeds":""},{"date":"2026-05-29","time":"11 AM","evnum":"","name":"No Limit Hold'em Day 1A","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$1M GTD","feeds":""},{"date":"2026-05-29","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$100K GTD","feeds":""},{"date":"2026-05-30","time":"11:10 AM","evnum":"25","name":"$600 No Limit Hold'em","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$40K GTD","feeds":""},{"date":"2026-05-30","time":"6:10 PM","evnum":"26","name":"$400 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":400.0,"gtd":"$25K GTD","feeds":""},{"date":"2026-05-30","time":"7 PM","evnum":"","name":"$1,100 NLH Landmark Satellite","loc":"WSOP","type":"Satellite","buyin":1100.0,"gtd":"Seat","feeds":"\u2192 GG Million$ High Roller NLH ($10,000)"},{"date":"2026-05-30","time":"11 AM","evnum":"","name":"No Limit Hold'em Day 1B","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$1M GTD","feeds":""},{"date":"2026-05-30","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$100K GTD","feeds":""},{"date":"2026-05-31","time":"6:10 PM","evnum":"29","name":"$400 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":400.0,"gtd":"$25K GTD","feeds":""},{"date":"2026-05-31","time":"10 AM","evnum":"#10","name":"Deepstack No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":600.0,"gtd":"","feeds":""},{"date":"2026-05-31","time":"12 PM","evnum":"#11","name":"GGMillion$ High Roller No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":10000.0,"gtd":"","feeds":""},{"date":"2026-05-31","time":"11 AM","evnum":"","name":"No Limit Hold'em Day 1C","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$1M GTD","feeds":""},{"date":"2026-05-31","time":"7:30 PM","evnum":"","name":"No Limit Hold'em Day 1D Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$1M GTD","feeds":""},{"date":"2026-06-01","time":"11:10 AM","evnum":"30","name":"$800 No Limit Hold'em","loc":"Venetian","type":"Tournament","buyin":800.0,"gtd":"$150K GTD","feeds":""},{"date":"2026-06-01","time":"6:10 PM","evnum":"31","name":"$600 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$40K GTD","feeds":""},{"date":"2026-06-01","time":"10 AM","evnum":"#13","name":"6-Handed No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":1500.0,"gtd":"","feeds":""},{"date":"2026-06-01","time":"11 AM","evnum":"","name":"No Limit Hold'em Day 1A","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$1.5M GTD","feeds":""},{"date":"2026-06-01","time":"6 PM","evnum":"","name":"No Limit Hold'em Day 1B Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$1.5M GTD","feeds":""},{"date":"2026-06-02","time":"11:10 AM","evnum":"32","name":"$800 No Limit Hold'em","loc":"Venetian","type":"Tournament","buyin":800.0,"gtd":"$150K GTD","feeds":""},{"date":"2026-06-02","time":"6:10 PM","evnum":"33","name":"$600 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$40K GTD","feeds":""},{"date":"2026-06-02","time":"12 PM","evnum":"#16","name":"U.S. Circuit Championship No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":1700.0,"gtd":"","feeds":""},{"date":"2026-06-02","time":"6 PM","evnum":"","name":"$2,750 High Roller NLH Landmark Satellite","loc":"WSOP","type":"Satellite","buyin":2750.0,"gtd":"Seat","feeds":"\u2192 High Roller NLH 8-Handed ($25,000)"},{"date":"2026-06-02","time":"11 AM","evnum":"","name":"No Limit Hold'em Day 1C","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$1.5M GTD","feeds":""},{"date":"2026-06-02","time":"6 PM","evnum":"","name":"No Limit Hold'em Day 1D Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$1.5M GTD","feeds":""},{"date":"2026-06-03","time":"11:10 AM","evnum":"34","name":"$800 No Limit Hold'em","loc":"Venetian","type":"Tournament","buyin":800.0,"gtd":"$150K GTD","feeds":""},{"date":"2026-06-03","time":"10 AM","evnum":"#18","name":"MONSTER STACK No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":1500.0,"gtd":"","feeds":""},{"date":"2026-06-03","time":"12 PM","evnum":"#19","name":"High Roller No-Limit Hold'em (8-Handed)","loc":"WSOP","type":"Tournament","buyin":25000.0,"gtd":"","feeds":""},{"date":"2026-06-03","time":"11 AM","evnum":"","name":"No Limit Hold'em Day 1E","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$1.5M GTD","feeds":""},{"date":"2026-06-03","time":"7 PM","evnum":"","name":"No Limit Hold'em Day 1F Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$1.5M GTD","feeds":""},{"date":"2026-06-04","time":"10:10 AM","evnum":"36","name":"$800 No Limit Hold'em 1A","loc":"Venetian","type":"Tournament","buyin":800.0,"gtd":"$300K GTD","feeds":""},{"date":"2026-06-04","time":"1 PM","evnum":"","name":"No Limit Hold'em","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$200K GTD","feeds":""},{"date":"2026-06-04","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$100K GTD","feeds":""},{"date":"2026-06-05","time":"6 PM","evnum":"","name":"$2,750 High Roller 6-Handed NLH Landmark Satellite","loc":"WSOP","type":"Satellite","buyin":2750.0,"gtd":"Seat","feeds":"\u2192 High Roller 6-Handed NLH ($25,000)"},{"date":"2026-06-05","time":"12 PM","evnum":"","name":"No Limit Hold'em","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$200K GTD","feeds":""},{"date":"2026-06-05","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$100K GTD","feeds":""},{"date":"2026-06-06","time":"10:10 AM","evnum":"37","name":"$1,100 No Limit Hold'em 1A","loc":"Venetian","type":"Tournament","buyin":1100.0,"gtd":"$1M GTD","feeds":""},{"date":"2026-06-06","time":"6:10 PM","evnum":"38","name":"$600 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$40K GTD","feeds":""},{"date":"2026-06-06","time":"12 PM","evnum":"#24","name":"High Roller Six Handed No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":25000.0,"gtd":"","feeds":""},{"date":"2026-06-06","time":"12 PM","evnum":"","name":"No Limit Hold'em","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$200K GTD","feeds":""},{"date":"2026-06-06","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$100K GTD","feeds":""},{"date":"2026-06-07","time":"10 AM","evnum":"#25","name":"Freezeout No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":500.0,"gtd":"","feeds":""},{"date":"2026-06-07","time":"12 PM","evnum":"#26","name":"No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":2000.0,"gtd":"","feeds":""},{"date":"2026-06-07","time":"3 PM","evnum":"","name":"$625 NLH 8-Handed Satellite to $5,300 Satellite","loc":"WSOP","type":"Satellite","buyin":625.0,"gtd":"Seat","feeds":"\u2192 $5,300 High Roller NLH Satellite"},{"date":"2026-06-07","time":"6 PM","evnum":"","name":"$5,300 High Roller NLH Landmark Satellite","loc":"WSOP","type":"Satellite","buyin":5300.0,"gtd":"Seat","feeds":"\u2192 High Roller NLH ($50,000)"},{"date":"2026-06-07","time":"2 PM","evnum":"","name":"Milestone Satellite","loc":"Wynn","type":"Satellite","buyin":600.0,"gtd":"10 Seats","feeds":"\u2192 $5,000 Seniors NLH 50+"},{"date":"2026-06-08","time":"6:10 PM","evnum":"40","name":"$600 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$40K GTD","feeds":""},{"date":"2026-06-08","time":"12 PM","evnum":"#29","name":"High Roller No-Limit Hold'em (8-Handed)","loc":"WSOP","type":"Tournament","buyin":50000.0,"gtd":"","feeds":""},{"date":"2026-06-08","time":"11 AM","evnum":"","name":"No Limit Hold'em Day 1A","loc":"Wynn","type":"Tournament","buyin":1600.0,"gtd":"$2M GTD","feeds":""},{"date":"2026-06-08","time":"6 PM","evnum":"","name":"No Limit Hold'em Day 1B","loc":"Wynn","type":"Tournament","buyin":1600.0,"gtd":"$2M GTD","feeds":""},{"date":"2026-06-09","time":"6:10 PM","evnum":"41","name":"$600 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$40K GTD","feeds":""},{"date":"2026-06-09","time":"10 AM","evnum":"#31","name":"Super Turbo Bounty No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":1500.0,"gtd":"","feeds":""},{"date":"2026-06-09","time":"12 PM","evnum":"#32","name":"No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":3000.0,"gtd":"","feeds":""},{"date":"2026-06-09","time":"12 PM","evnum":"","name":"$70 Warmup Landmark Satellite","loc":"WSOP","type":"Satellite","buyin":70.0,"gtd":"Seat","feeds":"\u2192 Colossus NLH ($500)"},{"date":"2026-06-09","time":"12 PM","evnum":"","name":"$120 Turbo Satellite to $850 NLH Satellite","loc":"WSOP","type":"Satellite","buyin":120.0,"gtd":"Seat","feeds":"\u2192 $850 NLH Landmark Satellite"},{"date":"2026-06-09","time":"3 PM","evnum":"","name":"$850 NLH Satellite to $7,500 HR Satellite","loc":"WSOP","type":"Satellite","buyin":850.0,"gtd":"Seat","feeds":"\u2192 $7,500 High Roller NLH Satellite"},{"date":"2026-06-09","time":"6 PM","evnum":"","name":"$7,500 High Roller NLH Landmark Satellite","loc":"WSOP","type":"Satellite","buyin":7500.0,"gtd":"Seat","feeds":"\u2192 Super High Roller NLH ($250,000)"},{"date":"2026-06-09","time":"11 AM","evnum":"","name":"No Limit Hold'em Day 1C","loc":"Wynn","type":"Tournament","buyin":1600.0,"gtd":"$2M GTD","feeds":""},{"date":"2026-06-09","time":"6 PM","evnum":"","name":"No Limit Hold'em Day 1D","loc":"Wynn","type":"Tournament","buyin":1600.0,"gtd":"$2M GTD","feeds":""},{"date":"2026-06-10","time":"11:10 AM","evnum":"42","name":"$800 No Limit Hold'em","loc":"Venetian","type":"Tournament","buyin":800.0,"gtd":"$150K GTD","feeds":""},{"date":"2026-06-10","time":"6:10 PM","evnum":"43","name":"$600 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$40K GTD","feeds":""},{"date":"2026-06-10","time":"10 AM","evnum":"#34","name":"COLOSSUS No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":500.0,"gtd":"","feeds":""},{"date":"2026-06-10","time":"1 PM","evnum":"#36","name":"High Roller No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":100000.0,"gtd":"","feeds":""},{"date":"2026-06-10","time":"11 AM","evnum":"","name":"No Limit Hold'em Day 1E","loc":"Wynn","type":"Tournament","buyin":1600.0,"gtd":"$2M GTD","feeds":""},{"date":"2026-06-10","time":"7 PM","evnum":"","name":"No Limit Hold'em Day 1F Turbo","loc":"Wynn","type":"Tournament","buyin":1600.0,"gtd":"$2M GTD","feeds":""},{"date":"2026-06-11","time":"6:10 PM","evnum":"45","name":"$600 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$40K GTD","feeds":""},{"date":"2026-06-11","time":"12 PM","evnum":"","name":"No Limit Hold'em Day 1A","loc":"Wynn","type":"Tournament","buyin":3500.0,"gtd":"$5M GTD","feeds":""},{"date":"2026-06-11","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$100K GTD","feeds":""},{"date":"2026-06-11","time":"2 PM","evnum":"","name":"Milestone Satellite","loc":"Wynn","type":"Satellite","buyin":500.0,"gtd":"10 Seats","feeds":"\u2192 $3,500 NLH"},{"date":"2026-06-12","time":"6:10 PM","evnum":"46","name":"$600 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$40K GTD","feeds":""},{"date":"2026-06-12","time":"3 PM","evnum":"","name":"$2,800 High Roller NLH Landmark Satellite","loc":"WSOP","type":"Satellite","buyin":2800.0,"gtd":"Seat","feeds":"\u2192 Super High Roller NLH ($250,000)"},{"date":"2026-06-12","time":"6 PM","evnum":"","name":"$25,400 High Roller NLH Landmark Satellite","loc":"WSOP","type":"Satellite","buyin":25400.0,"gtd":"Seat","feeds":"\u2192 Super High Roller NLH ($250,000)"},{"date":"2026-06-12","time":"12 PM","evnum":"","name":"No Limit Hold'em Day 1B","loc":"Wynn","type":"Tournament","buyin":3500.0,"gtd":"$5M GTD","feeds":""},{"date":"2026-06-12","time":"6 PM","evnum":"","name":"Milestone Satellite","loc":"Wynn","type":"Satellite","buyin":500.0,"gtd":"10 Seats","feeds":"\u2192 $3,500 NLH"},{"date":"2026-06-13","time":"6:10 PM","evnum":"47","name":"$600 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$40K GTD","feeds":""},{"date":"2026-06-13","time":"12 PM","evnum":"#41","name":"Super High Roller No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":250000.0,"gtd":"","feeds":""},{"date":"2026-06-13","time":"7 PM","evnum":"","name":"$1,100 Turbo NLH Landmark Satellite","loc":"WSOP","type":"Satellite","buyin":1100.0,"gtd":"Seat","feeds":"\u2192 Various NLH events"},{"date":"2026-06-13","time":"12 PM","evnum":"","name":"No Limit Hold'em Day 1C","loc":"Wynn","type":"Tournament","buyin":3500.0,"gtd":"$5M GTD","feeds":""},{"date":"2026-06-13","time":"6 PM","evnum":"","name":"Milestone Satellite","loc":"Wynn","type":"Satellite","buyin":500.0,"gtd":"10 Seats","feeds":"\u2192 $3,500 NLH"},{"date":"2026-06-14","time":"11:10 AM","evnum":"48","name":"$1,100 No Limit Hold'em","loc":"Venetian","type":"Tournament","buyin":1100.0,"gtd":"$200K GTD","feeds":""},{"date":"2026-06-14","time":"10 AM","evnum":"#43","name":"8-Handed Deepstack No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":800.0,"gtd":"","feeds":""},{"date":"2026-06-14","time":"12 PM","evnum":"#44","name":"Super Turbo Bounty No-Limit Hold'em (8-Handed)","loc":"WSOP","type":"Tournament","buyin":10000.0,"gtd":"","feeds":""},{"date":"2026-06-14","time":"12 PM","evnum":"","name":"No Limit Hold'em Day 1D","loc":"Wynn","type":"Tournament","buyin":3500.0,"gtd":"$5M GTD","feeds":""},{"date":"2026-06-15","time":"11:10 AM","evnum":"50","name":"$800 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":800.0,"gtd":"$150K GTD","feeds":""},{"date":"2026-06-15","time":"11 AM","evnum":"","name":"NLH Mystery Bounty Day 1A","loc":"Wynn","type":"Tournament","buyin":2200.0,"gtd":"$3M GTD","feeds":""},{"date":"2026-06-15","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$100K GTD","feeds":""},{"date":"2026-06-15","time":"2 PM","evnum":"","name":"Milestone Satellite","loc":"Wynn","type":"Satellite","buyin":400.0,"gtd":"10 Seats","feeds":"\u2192 $2,200 NLH Mystery Bounty"},{"date":"2026-06-16","time":"11:10 AM","evnum":"52","name":"$800 No Limit Hold'em","loc":"Venetian","type":"Tournament","buyin":800.0,"gtd":"$150K GTD","feeds":""},{"date":"2026-06-16","time":"6:10 PM","evnum":"53","name":"$600 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$40K GTD","feeds":""},{"date":"2026-06-16","time":"2 PM","evnum":"#49","name":"Freezeout No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":2500.0,"gtd":"","feeds":""},{"date":"2026-06-16","time":"7 PM","evnum":"","name":"$1,100 NLH Landmark Satellite","loc":"WSOP","type":"Satellite","buyin":1100.0,"gtd":"Seat","feeds":"\u2192 Mystery Bounty NLH 8-Handed ($10,000)"},{"date":"2026-06-16","time":"11 AM","evnum":"","name":"NLH Mystery Bounty Day 1B","loc":"Wynn","type":"Tournament","buyin":2200.0,"gtd":"$3M GTD","feeds":""},{"date":"2026-06-16","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$100K GTD","feeds":""},{"date":"2026-06-16","time":"10 AM","evnum":"","name":"Milestone Satellite","loc":"Wynn","type":"Satellite","buyin":400.0,"gtd":"10 Seats","feeds":"\u2192 $2,200 NLH Mystery Bounty"},{"date":"2026-06-16","time":"2 PM","evnum":"","name":"Milestone Satellite","loc":"Wynn","type":"Satellite","buyin":400.0,"gtd":"10 Seats","feeds":"\u2192 $2,200 NLH Mystery Bounty"},{"date":"2026-06-17","time":"11:10 AM","evnum":"54","name":"$1,100 No Limit Hold'em","loc":"Venetian","type":"Tournament","buyin":1100.0,"gtd":"$200K GTD","feeds":""},{"date":"2026-06-17","time":"6:10 PM","evnum":"55","name":"$600 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$40K GTD","feeds":""},{"date":"2026-06-17","time":"10 AM","evnum":"#50","name":"MILLIONAIRE MAKER No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":1500.0,"gtd":"","feeds":""},{"date":"2026-06-17","time":"12 PM","evnum":"#51","name":"Mystery Bounty No-Limit Hold'em (8-Handed)","loc":"WSOP","type":"Tournament","buyin":10000.0,"gtd":"","feeds":""},{"date":"2026-06-17","time":"11 AM","evnum":"","name":"NLH Mystery Bounty Day 1C","loc":"Wynn","type":"Tournament","buyin":2200.0,"gtd":"$3M GTD","feeds":""},{"date":"2026-06-17","time":"7:30 PM","evnum":"","name":"NLH Mystery Bounty Day 1D Turbo","loc":"Wynn","type":"Tournament","buyin":2200.0,"gtd":"$3M GTD","feeds":""},{"date":"2026-06-18","time":"11:10 AM","evnum":"56","name":"$1,100 No Limit Hold'em","loc":"Venetian","type":"Tournament","buyin":1100.0,"gtd":"$200K GTD","feeds":""},{"date":"2026-06-18","time":"6:10 PM","evnum":"57","name":"$600 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$40K GTD","feeds":""},{"date":"2026-06-18","time":"2 PM","evnum":"","name":"NLH 8-Max","loc":"Wynn","type":"Tournament","buyin":3000.0,"gtd":"$300K GTD","feeds":""},{"date":"2026-06-18","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$100K GTD","feeds":""},{"date":"2026-06-19","time":"2 PM","evnum":"#56","name":"6-Handed No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":3000.0,"gtd":"","feeds":""},{"date":"2026-06-19","time":"12 PM","evnum":"","name":"No Limit Hold'em","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$250K GTD","feeds":""},{"date":"2026-06-19","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$100K GTD","feeds":""},{"date":"2026-06-20","time":"6:10 PM","evnum":"60","name":"$600 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$40K GTD","feeds":""},{"date":"2026-06-20","time":"12 PM","evnum":"","name":"No Limit Hold'em","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$250K GTD","feeds":""},{"date":"2026-06-20","time":"6 PM","evnum":"","name":"Milestone Satellite","loc":"Wynn","type":"Satellite","buyin":1100.0,"gtd":"10 Seats","feeds":"\u2192 $10,400 Wynn Summer Championship"},{"date":"2026-06-21","time":"6:10 PM","evnum":"61","name":"$600 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$40K GTD","feeds":""},{"date":"2026-06-21","time":"10 AM","evnum":"#59","name":"SALUTE TO WARRIORS - No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":500.0,"gtd":"","feeds":""},{"date":"2026-06-21","time":"12 PM","evnum":"","name":"Wynn Summer Championship Day 1A","loc":"Wynn","type":"Tournament","buyin":10400.0,"gtd":"$10M GTD","feeds":""},{"date":"2026-06-21","time":"1 PM","evnum":"","name":"Milestone Satellite","loc":"Wynn","type":"Satellite","buyin":1100.0,"gtd":"10 Seats","feeds":"\u2192 $10,400 Wynn Summer Championship"},{"date":"2026-06-21","time":"6 PM","evnum":"","name":"Milestone Satellite","loc":"Wynn","type":"Satellite","buyin":1100.0,"gtd":"10 Seats","feeds":"\u2192 $10,400 Wynn Summer Championship"},{"date":"2026-06-22","time":"11:10 AM","evnum":"62","name":"$1,600 No Limit Hold'em","loc":"Venetian","type":"Tournament","buyin":1600.0,"gtd":"$300K GTD","feeds":""},{"date":"2026-06-22","time":"6:10 PM","evnum":"63","name":"$600 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$40K GTD","feeds":""},{"date":"2026-06-22","time":"2 PM","evnum":"#62","name":"No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":2500.0,"gtd":"","feeds":""},{"date":"2026-06-22","time":"12 PM","evnum":"","name":"$130 Warmup NLH Landmark Satellite","loc":"WSOP","type":"Satellite","buyin":130.0,"gtd":"Seat","feeds":"\u2192 Mystery Millions NLH ($1,000)"},{"date":"2026-06-22","time":"4 PM","evnum":"","name":"$240 Warmup NLH Landmark Satellite","loc":"WSOP","type":"Satellite","buyin":240.0,"gtd":"Seat","feeds":"\u2192 Mystery Millions NLH ($1,000)"},{"date":"2026-06-22","time":"6 PM","evnum":"","name":"$2,750 High Roller PLO / NLH Landmark Satellite","loc":"WSOP","type":"Satellite","buyin":2750.0,"gtd":"Seat","feeds":"\u2192 High Roller NLH / PLO events"},{"date":"2026-06-22","time":"11 AM","evnum":"","name":"Ladies NLH","loc":"Wynn","type":"Tournament","buyin":600.0,"gtd":"$50K GTD","feeds":""},{"date":"2026-06-22","time":"12 PM","evnum":"","name":"Wynn Summer Championship Day 1B","loc":"Wynn","type":"Tournament","buyin":10400.0,"gtd":"$10M GTD","feeds":""},{"date":"2026-06-22","time":"12 PM","evnum":"","name":"Milestone Satellite","loc":"Wynn","type":"Satellite","buyin":1100.0,"gtd":"10 Seats","feeds":"\u2192 $10,400 Wynn Summer Championship"},{"date":"2026-06-22","time":"6 PM","evnum":"","name":"Milestone Satellite","loc":"Wynn","type":"Satellite","buyin":1100.0,"gtd":"10 Seats","feeds":"\u2192 $10,400 Wynn Summer Championship"},{"date":"2026-06-23","time":"11:10 AM","evnum":"64","name":"$1,100 No Limit Hold'em","loc":"Venetian","type":"Tournament","buyin":1100.0,"gtd":"$200K GTD","feeds":""},{"date":"2026-06-23","time":"6:10 PM","evnum":"65","name":"$600 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$40K GTD","feeds":""},{"date":"2026-06-23","time":"10 AM","evnum":"#63","name":"Mystery Millions - No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":1000.0,"gtd":"","feeds":""},{"date":"2026-06-23","time":"2 PM","evnum":"#65","name":"Freezeout No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":1500.0,"gtd":"","feeds":""},{"date":"2026-06-23","time":"12 PM","evnum":"","name":"Wynn Summer Championship Day 1C","loc":"Wynn","type":"Tournament","buyin":10400.0,"gtd":"$10M GTD","feeds":""},{"date":"2026-06-23","time":"12 PM","evnum":"","name":"Milestone Satellite","loc":"Wynn","type":"Satellite","buyin":1100.0,"gtd":"10 Seats","feeds":"\u2192 $10,400 Wynn Summer Championship"},{"date":"2026-06-23","time":"6 PM","evnum":"","name":"Milestone Satellite","loc":"Wynn","type":"Satellite","buyin":1100.0,"gtd":"10 Seats","feeds":"\u2192 $10,400 Wynn Summer Championship"},{"date":"2026-06-24","time":"11:10 AM","evnum":"66","name":"$800 No Limit Hold'em LIPS Ladies","loc":"Venetian","type":"Tournament","buyin":800.0,"gtd":"$100K GTD","feeds":""},{"date":"2026-06-24","time":"12 PM","evnum":"#66","name":"TAG TEAM No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":1000.0,"gtd":"","feeds":""},{"date":"2026-06-24","time":"12 PM","evnum":"","name":"Wynn Summer Championship Day 1D","loc":"Wynn","type":"Tournament","buyin":10400.0,"gtd":"$10M GTD","feeds":""},{"date":"2026-06-24","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$100K GTD","feeds":""},{"date":"2026-06-24","time":"10 AM","evnum":"","name":"Milestone Satellite","loc":"Wynn","type":"Satellite","buyin":1100.0,"gtd":"5 Seats","feeds":"\u2192 $10,400 Wynn Summer Championship"},{"date":"2026-06-25","time":"10:10 AM","evnum":"68","name":"$1,100 No Limit Hold'em 1A","loc":"Venetian","type":"Tournament","buyin":1100.0,"gtd":"$500K GTD","feeds":""},{"date":"2026-06-25","time":"12:10 PM","evnum":"69","name":"$1,100 Pot Limit Omaha Double Board Bomb Pot","loc":"Venetian","type":"Double Board PLO","buyin":1100.0,"gtd":"$100K GTD","feeds":""},{"date":"2026-06-25","time":"12 PM","evnum":"#68","name":"LADIES No-Limit Hold'em Championship","loc":"WSOP","type":"Tournament","buyin":1000.0,"gtd":"","feeds":""},{"date":"2026-06-25","time":"1 PM","evnum":"","name":"No Limit Hold'em","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$250K GTD","feeds":""},{"date":"2026-06-25","time":"2 PM","evnum":"","name":"NLH High Roller (2 Day)","loc":"Wynn","type":"Tournament","buyin":25800.0,"gtd":"","feeds":""},{"date":"2026-06-25","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$100K GTD","feeds":""},{"date":"2026-06-26","time":"7 PM","evnum":"","name":"$585 6-Handed NLH Landmark Satellite","loc":"WSOP","type":"Satellite","buyin":585.0,"gtd":"Seat","feeds":"\u2192 6-Handed NLH ($3,000)"},{"date":"2026-06-26","time":"12 PM","evnum":"","name":"No Limit Hold'em","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$250K GTD","feeds":""},{"date":"2026-06-26","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$100K GTD","feeds":""},{"date":"2026-06-27","time":"6:10 PM","evnum":"71","name":"$600 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$40K GTD","feeds":""},{"date":"2026-06-27","time":"12 PM","evnum":"","name":"No Limit Hold'em","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$250K GTD","feeds":""},{"date":"2026-06-27","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$100K GTD","feeds":""},{"date":"2026-06-28","time":"6:10 PM","evnum":"73","name":"$600 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$40K GTD","feeds":""},{"date":"2026-06-28","time":"4:10 PM","evnum":"72","name":"$300 Ladies Milestone Satellite","loc":"Venetian","type":"Satellite","buyin":300.0,"gtd":"3 Seats","feeds":"\u2192 Ev #76 ($2,500 LIPS Ladies HR NLH)"},{"date":"2026-06-28","time":"10 AM","evnum":"#72","name":"MINI Main Event No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":1000.0,"gtd":"","feeds":""},{"date":"2026-06-28","time":"12 PM","evnum":"#73","name":"6-Handed No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":5000.0,"gtd":"","feeds":""},{"date":"2026-06-28","time":"12 PM","evnum":"","name":"No Limit Hold'em","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$250K GTD","feeds":""},{"date":"2026-06-28","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$100K GTD","feeds":""},{"date":"2026-06-28","time":"4 PM","evnum":"","name":"Milestone Satellite","loc":"Wynn","type":"Satellite","buyin":300.0,"gtd":"5 Seats","feeds":"\u2192 $2,500 Ladies NLH High Roller"},{"date":"2026-06-29","time":"10:10 AM","evnum":"74","name":"$800 No Limit Hold'em 1A","loc":"Venetian","type":"Tournament","buyin":800.0,"gtd":"$500K GTD","feeds":""},{"date":"2026-06-29","time":"4:10 PM","evnum":"75","name":"$300 Ladies Milestone Satellite","loc":"Venetian","type":"Satellite","buyin":300.0,"gtd":"3 Seats","feeds":"\u2192 Ev #76 ($2,500 LIPS Ladies HR NLH)"},{"date":"2026-06-29","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$100K GTD","feeds":""},{"date":"2026-06-30","time":"12:10 PM","evnum":"76","name":"$2,500 No Limit Hold'em LIPS Ladies High Roller","loc":"Venetian","type":"Tournament","buyin":2500.0,"gtd":"$150K GTD","feeds":""},{"date":"2026-06-30","time":"12 PM","evnum":"","name":"No Limit Hold'em","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$250K GTD","feeds":""},{"date":"2026-06-30","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$100K GTD","feeds":""},{"date":"2026-07-01","time":"10 AM","evnum":"#78","name":"Deepstack Championship No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":600.0,"gtd":"","feeds":""},{"date":"2026-07-01","time":"12 PM","evnum":"#79","name":"Freezeout No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":3000.0,"gtd":"","feeds":""},{"date":"2026-07-01","time":"8 AM","evnum":"","name":"$150 Turbo NLH Landmark Satellite (Daily)","loc":"WSOP","type":"Satellite","buyin":150.0,"gtd":"Seat","feeds":"\u2192 Main Event NLH ($10,000)"},{"date":"2026-07-01","time":"10 AM","evnum":"","name":"$585 NLH Landmark Satellite (Daily, 20x)","loc":"WSOP","type":"Satellite","buyin":585.0,"gtd":"Seat","feeds":"\u2192 Main Event NLH ($10,000)"},{"date":"2026-07-01","time":"1 PM","evnum":"","name":"$1,100 NLH Landmark Satellite (Daily)","loc":"WSOP","type":"Satellite","buyin":1100.0,"gtd":"Seat","feeds":"\u2192 Main Event NLH ($10,000)"},{"date":"2026-07-01","time":"2 PM","evnum":"","name":"$260 NLH Turbo Landmark Satellite (Daily)","loc":"WSOP","type":"Satellite","buyin":260.0,"gtd":"Seat","feeds":"\u2192 Main Event NLH ($10,000)"},{"date":"2026-07-01","time":"4 PM","evnum":"","name":"$585 NLH Landmark Satellite (Daily, 20x)","loc":"WSOP","type":"Satellite","buyin":585.0,"gtd":"Seat","feeds":"\u2192 Main Event NLH ($10,000)"},{"date":"2026-07-01","time":"7 PM","evnum":"","name":"$2,200 NLH Landmark Satellite (Daily, 5x)","loc":"WSOP","type":"Satellite","buyin":2200.0,"gtd":"Seat","feeds":"\u2192 Main Event NLH ($10,000)"},{"date":"2026-07-01","time":"12 PM","evnum":"","name":"No Limit Hold'em","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$250K GTD","feeds":""},{"date":"2026-07-01","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$100K GTD","feeds":""},{"date":"2026-07-02","time":"10:10 AM","evnum":"77","name":"$1,100 No Limit Hold'em","loc":"Venetian","type":"Tournament","buyin":1100.0,"gtd":"$200K GTD","feeds":""},{"date":"2026-07-02","time":"10 AM","evnum":"#81","name":"Summer Celebration No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":800.0,"gtd":"","feeds":""},{"date":"2026-07-02","time":"11 AM","evnum":"#82","name":"MAIN EVENT No-Limit Hold'em World Championship","loc":"WSOP","type":"Tournament","buyin":10000.0,"gtd":"","feeds":""},{"date":"2026-07-02","time":"7 PM","evnum":"","name":"$585 Super Turbo NLH Landmark Satellite","loc":"WSOP","type":"Satellite","buyin":585.0,"gtd":"Seat","feeds":"\u2192 Super Turbo Bounty NLH ($5,000)"},{"date":"2026-07-02","time":"8 AM","evnum":"","name":"$1,100 Turbo NLH Landmark Satellite (Daily)","loc":"WSOP","type":"Satellite","buyin":1100.0,"gtd":"Seat","feeds":"\u2192 Main Event NLH ($10,000)"},{"date":"2026-07-02","time":"2 PM","evnum":"#83","name":"Double Board Bomb Pot Pot-Limit Omaha (8-Handed)","loc":"WSOP","type":"Double Board PLO","buyin":1500.0,"gtd":"","feeds":""},{"date":"2026-07-02","time":"12 PM","evnum":"","name":"No Limit Hold'em","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$250K GTD","feeds":""},{"date":"2026-07-02","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$100K GTD","feeds":""},{"date":"2026-07-03","time":"10:10 AM","evnum":"78","name":"$1,100 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":1100.0,"gtd":"$200K GTD","feeds":""},{"date":"2026-07-03","time":"2 PM","evnum":"#84","name":"Super Turbo Bounty No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":5000.0,"gtd":"","feeds":""},{"date":"2026-07-03","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$100K GTD","feeds":""},{"date":"2026-07-04","time":"10:10 AM","evnum":"79","name":"$1,100 No Limit Hold'em","loc":"Venetian","type":"Tournament","buyin":1100.0,"gtd":"$200K GTD","feeds":""},{"date":"2026-07-04","time":"10 AM","evnum":"#85","name":"No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":1000.0,"gtd":"","feeds":""},{"date":"2026-07-04","time":"11 AM","evnum":"","name":"NLH Mystery Bounty Day 1A","loc":"Wynn","type":"Tournament","buyin":1600.0,"gtd":"$2M GTD","feeds":""},{"date":"2026-07-04","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$100K GTD","feeds":""},{"date":"2026-07-05","time":"10:10 AM","evnum":"80","name":"$1,600 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":1600.0,"gtd":"$500K GTD","feeds":""},{"date":"2026-07-05","time":"10 AM","evnum":"#86","name":"ULTRA STACK No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":600.0,"gtd":"","feeds":""},{"date":"2026-07-05","time":"11 AM","evnum":"","name":"NLH Mystery Bounty Day 1B","loc":"Wynn","type":"Tournament","buyin":1600.0,"gtd":"$2M GTD","feeds":""},{"date":"2026-07-05","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$100K GTD","feeds":""},{"date":"2026-07-06","time":"10:10 AM","evnum":"81","name":"$1,100 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":1100.0,"gtd":"$200K GTD","feeds":""},{"date":"2026-07-06","time":"11 AM","evnum":"","name":"NLH Mystery Bounty Day 1C","loc":"Wynn","type":"Tournament","buyin":1600.0,"gtd":"$2M GTD","feeds":""},{"date":"2026-07-06","time":"7:30 PM","evnum":"","name":"NLH Mystery Bounty Day 1D Turbo","loc":"Wynn","type":"Tournament","buyin":1600.0,"gtd":"$2M GTD","feeds":""},{"date":"2026-07-07","time":"6:10 PM","evnum":"84","name":"$600 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$40K GTD","feeds":""},{"date":"2026-07-07","time":"12 PM","evnum":"","name":"$50 Warmup Landmark Satellite","loc":"WSOP","type":"Satellite","buyin":50.0,"gtd":"Seat","feeds":"\u2192 Gladiators of Poker NLH ($300)"},{"date":"2026-07-07","time":"12 PM","evnum":"","name":"No Limit Hold'em Day 1A","loc":"Wynn","type":"Tournament","buyin":2200.0,"gtd":"$2M GTD","feeds":""},{"date":"2026-07-07","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$100K GTD","feeds":""},{"date":"2026-07-07","time":"2 PM","evnum":"","name":"Milestone Satellite","loc":"Wynn","type":"Satellite","buyin":400.0,"gtd":"10 Seats","feeds":"\u2192 $2,200 NLH"},{"date":"2026-07-08","time":"6:10 PM","evnum":"85","name":"$600 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$40K GTD","feeds":""},{"date":"2026-07-08","time":"10 AM","evnum":"#88","name":"Gladiators of Poker No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":300.0,"gtd":"","feeds":""},{"date":"2026-07-08","time":"12 PM","evnum":"#89","name":"Mid-Stakes Championship No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":3000.0,"gtd":"","feeds":""},{"date":"2026-07-08","time":"12 PM","evnum":"","name":"No Limit Hold'em Day 1B","loc":"Wynn","type":"Tournament","buyin":2200.0,"gtd":"$2M GTD","feeds":""},{"date":"2026-07-08","time":"10 AM","evnum":"","name":"Milestone Satellite","loc":"Wynn","type":"Satellite","buyin":400.0,"gtd":"10 Seats","feeds":"\u2192 $2,200 NLH"},{"date":"2026-07-09","time":"6:10 PM","evnum":"86","name":"$600 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$40K GTD","feeds":""},{"date":"2026-07-09","time":"1 PM","evnum":"#90","name":"High Roller No-Limit Hold'em 8-Handed","loc":"WSOP","type":"Tournament","buyin":50000.0,"gtd":"","feeds":""},{"date":"2026-07-09","time":"12 PM","evnum":"","name":"No Limit Hold'em","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$250K GTD","feeds":""},{"date":"2026-07-09","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$100K GTD","feeds":""},{"date":"2026-07-10","time":"7 PM","evnum":"","name":"$1,100 6-Handed NLH Landmark Satellite","loc":"WSOP","type":"Satellite","buyin":1100.0,"gtd":"Seat","feeds":"\u2192 6-Handed NLH Championship ($10,000)"},{"date":"2026-07-10","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$100K GTD","feeds":""},{"date":"2026-07-11","time":"10:10 AM","evnum":"87","name":"$1,100 No Limit Hold'em MSPT 1A","loc":"Venetian","type":"Tournament","buyin":1100.0,"gtd":"$1M GTD","feeds":""},{"date":"2026-07-11","time":"12 PM","evnum":"#93","name":"The Closer No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":1500.0,"gtd":"","feeds":""},{"date":"2026-07-11","time":"2 PM","evnum":"#94","name":"6-Handed No-Limit Hold'em Championship","loc":"WSOP","type":"Tournament","buyin":10000.0,"gtd":"","feeds":""},{"date":"2026-07-11","time":"12 PM","evnum":"","name":"No Limit Hold'em","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$200K GTD","feeds":""},{"date":"2026-07-11","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":1100.0,"gtd":"$100K GTD","feeds":""},{"date":"2026-07-12","time":"10 AM","evnum":"#95","name":"Summer Saver No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":500.0,"gtd":"","feeds":""},{"date":"2026-07-12","time":"7 PM","evnum":"","name":"$585 8-Handed NLH Landmark Satellite","loc":"WSOP","type":"Satellite","buyin":585.0,"gtd":"Seat","feeds":"\u2192 8-Handed NLH ($5,000)"},{"date":"2026-07-12","time":"12 PM","evnum":"","name":"No Limit Hold'em","loc":"Wynn","type":"Tournament","buyin":600.0,"gtd":"$50K GTD","feeds":""},{"date":"2026-07-12","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":600.0,"gtd":"$50K GTD","feeds":""},{"date":"2026-07-13","time":"12 PM","evnum":"","name":"No Limit Hold'em","loc":"Wynn","type":"Tournament","buyin":600.0,"gtd":"$50K GTD","feeds":""},{"date":"2026-07-13","time":"6 PM","evnum":"","name":"NLH Turbo","loc":"Wynn","type":"Tournament","buyin":600.0,"gtd":"$50K GTD","feeds":""},{"date":"2026-07-14","time":"11:10 AM","evnum":"88","name":"$600 No Limit Hold'em","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$30K GTD","feeds":""},{"date":"2026-07-14","time":"6:10 PM","evnum":"90","name":"$250 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":250.0,"gtd":"$15K GTD","feeds":""},{"date":"2026-07-14","time":"4:10 PM","evnum":"89","name":"$200 NLH Milestone Satellite","loc":"Venetian","type":"Satellite","buyin":200.0,"gtd":"2 Seats","feeds":"\u2192 Ev #91 ($1,600 MSPT NLH)"},{"date":"2026-07-14","time":"10 AM","evnum":"#98","name":"Deepstack No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":800.0,"gtd":"","feeds":""},{"date":"2026-07-14","time":"2 PM","evnum":"#99","name":"8-Handed No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":5000.0,"gtd":"","feeds":""},{"date":"2026-07-15","time":"11:10 AM","evnum":"91","name":"$1,600 No Limit Hold'em MSPT 1A (Heart Poker Champ)","loc":"Venetian","type":"Tournament","buyin":1600.0,"gtd":"$1M GTD","feeds":""},{"date":"2026-07-15","time":"6:10 PM","evnum":"93","name":"$250 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":250.0,"gtd":"$15K GTD","feeds":""},{"date":"2026-07-15","time":"4:10 PM","evnum":"92","name":"$200 NLH Milestone Satellite","loc":"Venetian","type":"Satellite","buyin":200.0,"gtd":"2 Seats","feeds":"\u2192 Ev #91 ($1,600 MSPT NLH)"},{"date":"2026-07-15","time":"10 AM","evnum":"#100","name":"Super Turbo No-Limit Hold'em","loc":"WSOP","type":"Tournament","buyin":1000.0,"gtd":"","feeds":""},{"date":"2026-07-16","time":"4:10 PM","evnum":"94","name":"$200 NLH Milestone Satellite","loc":"Venetian","type":"Satellite","buyin":200.0,"gtd":"2 Seats","feeds":"\u2192 Ev #91 ($1,600 MSPT NLH)"},{"date":"2026-07-17","time":"4:10 PM","evnum":"96","name":"$200 NLH Milestone Satellite","loc":"Venetian","type":"Satellite","buyin":200.0,"gtd":"2 Seats","feeds":"\u2192 Ev #91 ($1,600 MSPT NLH)"},{"date":"2026-07-18","time":"6:10 PM","evnum":"99","name":"$250 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":250.0,"gtd":"$15K GTD","feeds":""},{"date":"2026-07-19","time":"11:10 AM","evnum":"100","name":"$600 No Limit Hold'em","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$30K GTD","feeds":""},{"date":"2026-07-20","time":"11:10 AM","evnum":"102","name":"$600 No Limit Hold'em Bounty","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$30K GTD","feeds":""},{"date":"2026-07-24","time":"11:10 AM","evnum":"108","name":"$600 No Limit Hold'em 1A","loc":"Venetian","type":"Tournament","buyin":600.0,"gtd":"$150K GTD","feeds":""},{"date":"2026-07-25","time":"12:10 PM","evnum":"110","name":"$400 Pot Limit Omaha Double Board Bomb Pot","loc":"Venetian","type":"Double Board PLO","buyin":400.0,"gtd":"$15K GTD","feeds":""},{"date":"2026-07-27","time":"11:10 AM","evnum":"113","name":"$400 No Limit Hold'em 1A","loc":"Venetian","type":"Tournament","buyin":400.0,"gtd":"$200K GTD","feeds":""},{"date":"2026-08-02","time":"11:10 AM","evnum":"120","name":"$400 No Limit Hold'em","loc":"Venetian","type":"Tournament","buyin":400.0,"gtd":"$20K GTD","feeds":""},
+// ── WSOPC Commerce Casino 2026 (May 7–18) ─────────────────────────────────
+{"date":"2026-05-07","time":"11:00 AM","evnum":"1","name":"$400 Double Stack Opener NLH Re-Entry","loc":"WSOPC","type":"Tournament","buyin":400.0,"gtd":"$50K GTD","feeds":""},
+{"date":"2026-05-07","time":"12:00 PM","evnum":"2","name":"$600 Mini Main Event NLH Re-Entry (Flight A)","loc":"WSOPC","type":"Tournament","buyin":600.0,"gtd":"$500K GTD","feeds":""},
+{"date":"2026-05-08","time":"11:00 AM","evnum":"2","name":"$600 Mini Main Event NLH Re-Entry (Flight B)","loc":"WSOPC","type":"Tournament","buyin":600.0,"gtd":"$500K GTD","feeds":""},
+{"date":"2026-05-09","time":"11:00 AM","evnum":"2","name":"$600 Mini Main Event NLH Re-Entry (Flight C)","loc":"WSOPC","type":"Tournament","buyin":600.0,"gtd":"$500K GTD","feeds":""},
+{"date":"2026-05-09","time":"6:00 PM","evnum":"2","name":"$600 Mini Main Event NLH Re-Entry (Flight D)","loc":"WSOPC","type":"Tournament","buyin":600.0,"gtd":"$500K GTD","feeds":""},
+{"date":"2026-05-10","time":"11:00 AM","evnum":"2","name":"$600 Mini Main Event NLH Re-Entry (Flight E / Day 2)","loc":"WSOPC","type":"Tournament","buyin":600.0,"gtd":"$500K GTD","feeds":""},
+{"date":"2026-05-10","time":"10:00 AM","evnum":"3","name":"$400 Seniors (50+) NLH Re-Entry","loc":"WSOPC","type":"Tournament","buyin":400.0,"gtd":"$50K GTD","feeds":""},
+{"date":"2026-05-10","time":"12:00 PM","evnum":"4","name":"$600 White Chip Bounty NLH Re-Entry","loc":"WSOPC","type":"Tournament","buyin":600.0,"gtd":"$100K GTD","feeds":""},
+{"date":"2026-05-11","time":"11:00 AM","evnum":"5","name":"$500 Monster Stack NLH Re-Entry (Flight A)","loc":"WSOPC","type":"Tournament","buyin":500.0,"gtd":"$200K GTD","feeds":""},
+{"date":"2026-05-12","time":"11:00 AM","evnum":"5","name":"$500 Monster Stack NLH Re-Entry (Flight B)","loc":"WSOPC","type":"Tournament","buyin":500.0,"gtd":"$200K GTD","feeds":""},
+{"date":"2026-05-12","time":"6:00 PM","evnum":"5","name":"$500 Monster Stack NLH Re-Entry (Flight C / Day 2)","loc":"WSOPC","type":"Tournament","buyin":500.0,"gtd":"$200K GTD","feeds":""},
+{"date":"2026-05-12","time":"2:00 PM","evnum":"6","name":"$400 PLO 8-or-Better 8-Max","loc":"WSOPC","type":"Tournament","buyin":400.0,"gtd":"$25K GTD","feeds":""},
+{"date":"2026-05-12","time":"12:00 PM","evnum":"","name":"$250 Landmark Satellite → Main Event","loc":"WSOPC","type":"Satellite","buyin":250.0,"gtd":"Seat","feeds":"→ Ev #9 $1,700 Main Event"},
+{"date":"2026-05-13","time":"11:00 AM","evnum":"7","name":"$1,100 NLH Re-Entry","loc":"WSOPC","type":"Tournament","buyin":1100.0,"gtd":"$100K GTD","feeds":""},
+{"date":"2026-05-13","time":"2:00 PM","evnum":"8","name":"$600 PLO 8-Max","loc":"WSOPC","type":"Tournament","buyin":600.0,"gtd":"$50K GTD","feeds":""},
+{"date":"2026-05-13","time":"12:00 PM","evnum":"","name":"$250 Landmark Satellite → Main Event","loc":"WSOPC","type":"Satellite","buyin":250.0,"gtd":"Seat","feeds":"→ Ev #9 $1,700 Main Event"},
+{"date":"2026-05-14","time":"11:00 AM","evnum":"9","name":"$1,700 Main Event NLH (Flight A)","loc":"WSOPC","type":"Tournament","buyin":1700.0,"gtd":"$1M GTD","feeds":""},
+{"date":"2026-05-14","time":"2:00 PM","evnum":"10","name":"$600 T.O.R.S.E. Six-Max","loc":"WSOPC","type":"Tournament","buyin":600.0,"gtd":"$25K GTD","feeds":""},
+{"date":"2026-05-14","time":"12:00 PM","evnum":"","name":"$250 Landmark Satellite → Main Event","loc":"WSOPC","type":"Satellite","buyin":250.0,"gtd":"Seat","feeds":"→ Ev #9 $1,700 Main Event"},
+{"date":"2026-05-15","time":"11:00 AM","evnum":"9","name":"$1,700 Main Event NLH (Flight B)","loc":"WSOPC","type":"Tournament","buyin":1700.0,"gtd":"$1M GTD","feeds":""},
+{"date":"2026-05-15","time":"12:00 PM","evnum":"11","name":"$600 Mixed Triple Draw 6-Max","loc":"WSOPC","type":"Tournament","buyin":600.0,"gtd":"$25K GTD","feeds":""},
+{"date":"2026-05-15","time":"4:00 PM","evnum":"12","name":"$400 NLH Re-Entry","loc":"WSOPC","type":"Tournament","buyin":400.0,"gtd":"$25K GTD","feeds":""},
+{"date":"2026-05-15","time":"12:00 PM","evnum":"","name":"$250 Landmark Satellite → Main Event","loc":"WSOPC","type":"Satellite","buyin":250.0,"gtd":"Seat","feeds":"→ Ev #9 $1,700 Main Event"},
+{"date":"2026-05-16","time":"11:00 AM","evnum":"9","name":"$1,700 Main Event NLH (Flight C / Day 2+)","loc":"WSOPC","type":"Tournament","buyin":1700.0,"gtd":"$1M GTD","feeds":""},
+{"date":"2026-05-16","time":"4:00 PM","evnum":"13","name":"$400 NLH Re-Entry","loc":"WSOPC","type":"Tournament","buyin":400.0,"gtd":"$25K GTD","feeds":""},
+{"date":"2026-05-16","time":"7:00 PM","evnum":"14","name":"$400 NLH Re-Entry (Turbo, 15-min levels)","loc":"WSOPC","type":"Tournament","buyin":400.0,"gtd":"$25K GTD","feeds":""},
+{"date":"2026-05-16","time":"12:00 PM","evnum":"","name":"$270 Landmark Satellite → High Roller","loc":"WSOPC","type":"Satellite","buyin":270.0,"gtd":"Seat","feeds":"→ Ev #17 $2,200 High Roller"},
+{"date":"2026-05-17","time":"11:00 AM","evnum":"15","name":"$500 40-40-40 NLH Re-Entry (40+ years old)","loc":"WSOPC","type":"Tournament","buyin":500.0,"gtd":"$100K GTD","feeds":""},
+{"date":"2026-05-17","time":"2:00 PM","evnum":"16","name":"$400 NLH Re-Entry","loc":"WSOPC","type":"Tournament","buyin":400.0,"gtd":"$25K GTD","feeds":""},
+{"date":"2026-05-17","time":"12:00 PM","evnum":"17","name":"$2,200 High Roller NLH 8-Max (Day 1)","loc":"WSOPC","type":"Tournament","buyin":2200.0,"gtd":"$100K GTD","feeds":""},
+{"date":"2026-05-18","time":"11:00 AM","evnum":"18","name":"$400 Double Stack Closer NLH Re-Entry","loc":"WSOPC","type":"Tournament","buyin":400.0,"gtd":"$50K GTD","feeds":""},
+{"date":"2026-05-18","time":"12:00 PM","evnum":"17","name":"$2,200 High Roller NLH 8-Max (Day 2)","loc":"WSOPC","type":"Tournament","buyin":2200.0,"gtd":"$100K GTD","feeds":""},
+{"date":"2026-05-18","time":"11:00 AM","evnum":"15","name":"$500 40-40-40 NLH Re-Entry (Day 2)","loc":"WSOPC","type":"Tournament","buyin":500.0,"gtd":"$100K GTD","feeds":""},
+// ── ARIA Summer Poker Classic 2026 (May 27 – July 12) ─────────────────────
+// May 27
+{"date":"2026-05-27","time":"10:00 AM","evnum":"","name":"$160 NLH Turbo Satellite","loc":"ARIA","type":"Satellite","buyin":160.0,"gtd":"5 Seats","feeds":"→ $1,100 NLH Mystery Bounty"},
+{"date":"2026-05-27","time":"1:00 PM","evnum":"","name":"$1,100 NLH Mystery Bounty","loc":"ARIA","type":"Tournament","buyin":1100.0,"gtd":"$250K GTD","feeds":""},
+{"date":"2026-05-27","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// May 28
+{"date":"2026-05-28","time":"11:00 AM","evnum":"","name":"$600 Badugi","loc":"ARIA","type":"Tournament","buyin":600.0,"gtd":"$30K GTD","feeds":""},
+{"date":"2026-05-28","time":"1:00 PM","evnum":"","name":"$800 NLH","loc":"ARIA","type":"Tournament","buyin":800.0,"gtd":"$200K GTD","feeds":""},
+{"date":"2026-05-28","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// May 29
+{"date":"2026-05-29","time":"11:00 AM","evnum":"","name":"$600 Omaha 8 or Better","loc":"ARIA","type":"Tournament","buyin":600.0,"gtd":"$30K GTD","feeds":""},
+{"date":"2026-05-29","time":"1:00 PM","evnum":"","name":"$800 NLH","loc":"ARIA","type":"Tournament","buyin":800.0,"gtd":"$200K GTD","feeds":""},
+{"date":"2026-05-29","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// May 30
+{"date":"2026-05-30","time":"11:00 AM","evnum":"","name":"$600 No Limit 2-7 Single Draw","loc":"ARIA","type":"Tournament","buyin":600.0,"gtd":"$30K GTD","feeds":""},
+{"date":"2026-05-30","time":"1:00 PM","evnum":"","name":"$800 Pot-Limit Omaha","loc":"ARIA","type":"Tournament","buyin":800.0,"gtd":"$200K GTD","feeds":""},
+{"date":"2026-05-30","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// May 31
+{"date":"2026-05-31","time":"11:00 AM","evnum":"","name":"$600 H.O.R.S.E.","loc":"ARIA","type":"Tournament","buyin":600.0,"gtd":"$30K GTD","feeds":""},
+{"date":"2026-05-31","time":"1:00 PM","evnum":"","name":"$600 NLH","loc":"ARIA","type":"Tournament","buyin":600.0,"gtd":"$150K GTD","feeds":""},
+{"date":"2026-05-31","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// June 1
+{"date":"2026-06-01","time":"11:00 AM","evnum":"","name":"$800 NLH","loc":"ARIA","type":"Tournament","buyin":800.0,"gtd":"$200K GTD","feeds":""},
+{"date":"2026-06-01","time":"1:00 PM","evnum":"","name":"$600 T.O.R.S.E.","loc":"ARIA","type":"Tournament","buyin":600.0,"gtd":"$30K GTD","feeds":""},
+{"date":"2026-06-01","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// June 2
+{"date":"2026-06-02","time":"11:00 AM","evnum":"","name":"$800 NLH","loc":"ARIA","type":"Tournament","buyin":800.0,"gtd":"$200K GTD","feeds":""},
+{"date":"2026-06-02","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// June 3
+{"date":"2026-06-03","time":"11:00 AM","evnum":"","name":"$800 Pot-Limit Omaha","loc":"ARIA","type":"Tournament","buyin":800.0,"gtd":"$200K GTD","feeds":""},
+{"date":"2026-06-03","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// June 4
+{"date":"2026-06-04","time":"11:00 AM","evnum":"","name":"$800 Seniors NLH","loc":"ARIA","type":"Tournament","buyin":800.0,"gtd":"$200K GTD","feeds":""},
+{"date":"2026-06-04","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// June 5
+{"date":"2026-06-05","time":"11:00 AM","evnum":"","name":"$600 NLH","loc":"ARIA","type":"Tournament","buyin":600.0,"gtd":"$150K GTD","feeds":""},
+{"date":"2026-06-05","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// June 6
+{"date":"2026-06-06","time":"11:00 AM","evnum":"","name":"$600 NLH","loc":"ARIA","type":"Tournament","buyin":600.0,"gtd":"$150K GTD","feeds":""},
+{"date":"2026-06-06","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// June 7
+{"date":"2026-06-07","time":"11:00 AM","evnum":"","name":"$600 Limit Hold'em","loc":"ARIA","type":"Tournament","buyin":600.0,"gtd":"$30K GTD","feeds":""},
+{"date":"2026-06-07","time":"1:00 PM","evnum":"","name":"$800 NLH","loc":"ARIA","type":"Tournament","buyin":800.0,"gtd":"$200K GTD","feeds":""},
+{"date":"2026-06-07","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// June 8
+{"date":"2026-06-08","time":"11:00 AM","evnum":"","name":"$1,100 NLH Mystery Bounty","loc":"ARIA","type":"Tournament","buyin":1100.0,"gtd":"$250K GTD","feeds":""},
+{"date":"2026-06-08","time":"1:00 PM","evnum":"","name":"$600 T.O.E.","loc":"ARIA","type":"Tournament","buyin":600.0,"gtd":"$30K GTD","feeds":""},
+{"date":"2026-06-08","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// June 9
+{"date":"2026-06-09","time":"11:00 AM","evnum":"","name":"$1,100 Pot-Limit Omaha","loc":"ARIA","type":"Tournament","buyin":1100.0,"gtd":"$250K GTD","feeds":""},
+{"date":"2026-06-09","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// June 10
+{"date":"2026-06-10","time":"11:00 AM","evnum":"","name":"$800 NLH","loc":"ARIA","type":"Tournament","buyin":800.0,"gtd":"$200K GTD","feeds":""},
+{"date":"2026-06-10","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// June 11
+{"date":"2026-06-11","time":"9:00 AM","evnum":"","name":"$240 NLH Turbo Satellite","loc":"ARIA","type":"Satellite","buyin":240.0,"gtd":"5 Seats","feeds":"→ $1,600 NLH"},
+{"date":"2026-06-11","time":"12:00 PM","evnum":"","name":"$1,600 NLH","loc":"ARIA","type":"Tournament","buyin":1600.0,"gtd":"$500K GTD","feeds":""},
+{"date":"2026-06-11","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// June 12
+{"date":"2026-06-12","time":"9:00 AM","evnum":"","name":"$240 NLH Turbo Satellite","loc":"ARIA","type":"Satellite","buyin":240.0,"gtd":"5 Seats","feeds":"→ $1,600 NLH"},
+{"date":"2026-06-12","time":"12:00 PM","evnum":"","name":"$1,600 NLH","loc":"ARIA","type":"Tournament","buyin":1600.0,"gtd":"$500K GTD","feeds":""},
+{"date":"2026-06-12","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// June 13
+{"date":"2026-06-13","time":"11:00 AM","evnum":"","name":"$1,100 BetMGM Pot-Limit Omaha","loc":"ARIA","type":"Tournament","buyin":1100.0,"gtd":"$250K GTD","feeds":""},
+{"date":"2026-06-13","time":"7:00 PM","evnum":"","name":"$160 BetMGM NLH Satellite","loc":"ARIA","type":"Satellite","buyin":160.0,"gtd":"10 Seats","feeds":"→ $1,100 BetMGM NLH Mystery Bounty"},
+// June 14
+{"date":"2026-06-14","time":"9:00 AM","evnum":"","name":"$160 BetMGM NLH Turbo Satellite","loc":"ARIA","type":"Satellite","buyin":160.0,"gtd":"5 Seats","feeds":"→ $1,100 BetMGM NLH Mystery Bounty"},
+{"date":"2026-06-14","time":"11:00 AM","evnum":"","name":"$1,100 BetMGM NLH Mystery Bounty","loc":"ARIA","type":"Tournament","buyin":1100.0,"gtd":"$300K GTD","feeds":""},
+{"date":"2026-06-14","time":"7:00 PM","evnum":"","name":"$240 BetMGM NLH Satellite","loc":"ARIA","type":"Satellite","buyin":240.0,"gtd":"10 Seats","feeds":"→ $1,600 BetMGM NLH"},
+// June 15
+{"date":"2026-06-15","time":"9:00 AM","evnum":"","name":"$240 BetMGM NLH Turbo Satellite","loc":"ARIA","type":"Satellite","buyin":240.0,"gtd":"5 Seats","feeds":"→ $1,600 BetMGM NLH"},
+{"date":"2026-06-15","time":"12:00 PM","evnum":"","name":"$1,600 BetMGM NLH","loc":"ARIA","type":"Tournament","buyin":1600.0,"gtd":"$500K GTD","feeds":""},
+{"date":"2026-06-15","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// June 16
+{"date":"2026-06-16","time":"11:00 AM","evnum":"","name":"$800 NLH","loc":"ARIA","type":"Tournament","buyin":800.0,"gtd":"$200K GTD","feeds":""},
+{"date":"2026-06-16","time":"1:00 PM","evnum":"","name":"$800 H.O.R.S.E.","loc":"ARIA","type":"Tournament","buyin":800.0,"gtd":"$40K GTD","feeds":""},
+{"date":"2026-06-16","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// June 17
+{"date":"2026-06-17","time":"11:00 AM","evnum":"","name":"$1,100 5-Card Pot-Limit Omaha","loc":"ARIA","type":"Tournament","buyin":1100.0,"gtd":"$150K GTD","feeds":""},
+{"date":"2026-06-17","time":"1:00 PM","evnum":"","name":"$800 NLH","loc":"ARIA","type":"Tournament","buyin":800.0,"gtd":"$200K GTD","feeds":""},
+{"date":"2026-06-17","time":"7:00 PM","evnum":"","name":"$300 NLH Satellite","loc":"ARIA","type":"Satellite","buyin":300.0,"gtd":"10 Seats","feeds":"→ Various NLH events"},
+// June 18
+{"date":"2026-06-18","time":"9:00 AM","evnum":"","name":"$300 NLH Turbo Satellite","loc":"ARIA","type":"Satellite","buyin":300.0,"gtd":"5 Seats","feeds":"→ $2,200 NLH Mystery Bounty"},
+{"date":"2026-06-18","time":"12:00 PM","evnum":"","name":"$2,200 NLH Mystery Bounty (2-Day)","loc":"ARIA","type":"Tournament","buyin":2200.0,"gtd":"$1M GTD","feeds":""},
+{"date":"2026-06-18","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// June 19
+{"date":"2026-06-19","time":"11:00 AM","evnum":"","name":"$2,200 NLH Mystery Bounty - Day 2","loc":"ARIA","type":"Tournament","buyin":2200.0,"gtd":"$1M GTD","feeds":""},
+{"date":"2026-06-19","time":"1:00 PM","evnum":"","name":"$800 NLH","loc":"ARIA","type":"Tournament","buyin":800.0,"gtd":"$200K GTD","feeds":""},
+{"date":"2026-06-19","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// June 20
+{"date":"2026-06-20","time":"11:00 AM","evnum":"","name":"$800 NLH","loc":"ARIA","type":"Tournament","buyin":800.0,"gtd":"$200K GTD","feeds":""},
+{"date":"2026-06-20","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// June 21
+{"date":"2026-06-21","time":"9:00 AM","evnum":"","name":"$240 NLH Turbo Satellite","loc":"ARIA","type":"Satellite","buyin":240.0,"gtd":"5 Seats","feeds":"→ $1,600 NLH"},
+{"date":"2026-06-21","time":"12:00 PM","evnum":"","name":"$1,600 NLH","loc":"ARIA","type":"Tournament","buyin":1600.0,"gtd":"$500K GTD","feeds":""},
+{"date":"2026-06-21","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// June 22
+{"date":"2026-06-22","time":"11:00 AM","evnum":"","name":"$1,100 NLH","loc":"ARIA","type":"Tournament","buyin":1100.0,"gtd":"$250K GTD","feeds":""},
+{"date":"2026-06-22","time":"1:00 PM","evnum":"","name":"$800 Omaha 8 or Better / Stud 8 or Better","loc":"ARIA","type":"Tournament","buyin":800.0,"gtd":"$40K GTD","feeds":""},
+{"date":"2026-06-22","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// June 23
+{"date":"2026-06-23","time":"11:00 AM","evnum":"","name":"$800 Ladies NLH Mystery Bounty","loc":"ARIA","type":"Tournament","buyin":800.0,"gtd":"$150K GTD","feeds":""},
+{"date":"2026-06-23","time":"1:00 PM","evnum":"","name":"$800 Pot-Limit Omaha","loc":"ARIA","type":"Tournament","buyin":800.0,"gtd":"$200K GTD","feeds":""},
+{"date":"2026-06-23","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// June 24
+{"date":"2026-06-24","time":"11:00 AM","evnum":"","name":"$1,100 NLH","loc":"ARIA","type":"Tournament","buyin":1100.0,"gtd":"$250K GTD","feeds":""},
+{"date":"2026-06-24","time":"1:00 PM","evnum":"","name":"$800 Stud 8 or Better","loc":"ARIA","type":"Tournament","buyin":800.0,"gtd":"$40K GTD","feeds":""},
+{"date":"2026-06-24","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// June 25
+{"date":"2026-06-25","time":"11:00 AM","evnum":"","name":"$800 NLH","loc":"ARIA","type":"Tournament","buyin":800.0,"gtd":"$200K GTD","feeds":""},
+{"date":"2026-06-25","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// June 26
+{"date":"2026-06-26","time":"11:00 AM","evnum":"","name":"$1,100 Seniors NLH","loc":"ARIA","type":"Tournament","buyin":1100.0,"gtd":"$200K GTD","feeds":""},
+{"date":"2026-06-26","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// June 27
+{"date":"2026-06-27","time":"11:00 AM","evnum":"","name":"$1,100 PLO Mystery Bounty","loc":"ARIA","type":"Tournament","buyin":1100.0,"gtd":"$250K GTD","feeds":""},
+{"date":"2026-06-27","time":"1:00 PM","evnum":"","name":"$800 8-Game Mixed","loc":"ARIA","type":"Tournament","buyin":800.0,"gtd":"$40K GTD","feeds":""},
+{"date":"2026-06-27","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// June 28
+{"date":"2026-06-28","time":"11:00 AM","evnum":"","name":"$1,100 NLH","loc":"ARIA","type":"Tournament","buyin":1100.0,"gtd":"$250K GTD","feeds":""},
+{"date":"2026-06-28","time":"7:00 PM","evnum":"","name":"$160 BetMGM NLH Satellite","loc":"ARIA","type":"Satellite","buyin":160.0,"gtd":"10 Seats","feeds":"→ $3,500 BetMGM Championship"},
+// June 29
+{"date":"2026-06-29","time":"9:00 AM","evnum":"","name":"$160 BetMGM NLH Turbo Satellite","loc":"ARIA","type":"Satellite","buyin":160.0,"gtd":"5 Seats","feeds":"→ $3,500 BetMGM Championship"},
+{"date":"2026-06-29","time":"11:00 AM","evnum":"","name":"$1,100 BetMGM NLH Mystery Bounty","loc":"ARIA","type":"Tournament","buyin":1100.0,"gtd":"$500K GTD","feeds":""},
+{"date":"2026-06-29","time":"7:00 PM","evnum":"","name":"$160 BetMGM PLO Satellite","loc":"ARIA","type":"Satellite","buyin":160.0,"gtd":"10 Seats","feeds":"→ $2,200 PLO Championship"},
+// June 30
+{"date":"2026-06-30","time":"9:00 AM","evnum":"","name":"$160 BetMGM PLO Turbo Satellite","loc":"ARIA","type":"Satellite","buyin":160.0,"gtd":"5 Seats","feeds":"→ $2,200 PLO Championship"},
+{"date":"2026-06-30","time":"11:00 AM","evnum":"","name":"$1,100 BetMGM PLO Mystery Bounty","loc":"ARIA","type":"Tournament","buyin":1100.0,"gtd":"$500K GTD","feeds":""},
+{"date":"2026-06-30","time":"7:00 PM","evnum":"","name":"$400 BetMGM NLH Satellite","loc":"ARIA","type":"Satellite","buyin":400.0,"gtd":"10 Seats","feeds":"→ $3,500 BetMGM Championship"},
+// July 1
+{"date":"2026-07-01","time":"9:00 AM","evnum":"","name":"$400 BetMGM NLH Turbo Satellite","loc":"ARIA","type":"Satellite","buyin":400.0,"gtd":"5 Seats","feeds":"→ $3,500 BetMGM Championship"},
+{"date":"2026-07-01","time":"12:00 PM","evnum":"","name":"$3,500 BetMGM Championship - Day 1A","loc":"ARIA","type":"Tournament","buyin":3500.0,"gtd":"$4M GTD","feeds":""},
+{"date":"2026-07-01","time":"7:00 PM","evnum":"","name":"$400 BetMGM NLH Satellite","loc":"ARIA","type":"Satellite","buyin":400.0,"gtd":"10 Seats","feeds":"→ $3,500 BetMGM Championship"},
+// July 2
+{"date":"2026-07-02","time":"9:00 AM","evnum":"","name":"$400 BetMGM NLH Turbo Satellite","loc":"ARIA","type":"Satellite","buyin":400.0,"gtd":"5 Seats","feeds":"→ $3,500 BetMGM Championship"},
+{"date":"2026-07-02","time":"12:00 PM","evnum":"","name":"$3,500 BetMGM Championship - Day 1B","loc":"ARIA","type":"Tournament","buyin":3500.0,"gtd":"$4M GTD","feeds":""},
+// July 3
+{"date":"2026-07-03","time":"12:00 PM","evnum":"","name":"$3,500 BetMGM Championship - Day 2","loc":"ARIA","type":"Tournament","buyin":3500.0,"gtd":"$4M GTD","feeds":""},
+{"date":"2026-07-03","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// July 4
+{"date":"2026-07-04","time":"11:00 AM","evnum":"","name":"$1,100 NLH","loc":"ARIA","type":"Tournament","buyin":1100.0,"gtd":"$250K GTD","feeds":""},
+{"date":"2026-07-04","time":"12:00 PM","evnum":"","name":"$3,500 BetMGM Championship - Day 3 & Final Table","loc":"ARIA","type":"Tournament","buyin":3500.0,"gtd":"$4M GTD","feeds":""},
+{"date":"2026-07-04","time":"7:00 PM","evnum":"","name":"$300 PLO Milestone Satellite","loc":"ARIA","type":"Satellite","buyin":300.0,"gtd":"10 Seats","feeds":"→ $2,200 PLO Championship"},
+// July 5
+{"date":"2026-07-05","time":"12:00 PM","evnum":"","name":"$2,200 PLO Championship (2-Day)","loc":"ARIA","type":"Tournament","buyin":2200.0,"gtd":"$1M GTD","feeds":""},
+{"date":"2026-07-05","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// July 6
+{"date":"2026-07-06","time":"11:00 AM","evnum":"","name":"$1,100 NLH","loc":"ARIA","type":"Tournament","buyin":1100.0,"gtd":"$250K GTD","feeds":""},
+{"date":"2026-07-06","time":"12:00 PM","evnum":"","name":"$2,200 PLO Championship - Day 2","loc":"ARIA","type":"Tournament","buyin":2200.0,"gtd":"$1M GTD","feeds":""},
+{"date":"2026-07-06","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// July 7
+{"date":"2026-07-07","time":"9:00 AM","evnum":"","name":"$240 NLH Turbo Satellite","loc":"ARIA","type":"Satellite","buyin":240.0,"gtd":"5 Seats","feeds":"→ $1,600 NLH"},
+{"date":"2026-07-07","time":"12:00 PM","evnum":"","name":"$1,600 NLH","loc":"ARIA","type":"Tournament","buyin":1600.0,"gtd":"$500K GTD","feeds":""},
+{"date":"2026-07-07","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// July 8
+{"date":"2026-07-08","time":"11:00 AM","evnum":"","name":"$1,100 NLH","loc":"ARIA","type":"Tournament","buyin":1100.0,"gtd":"$250K GTD","feeds":""},
+{"date":"2026-07-08","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// July 9
+{"date":"2026-07-09","time":"9:00 AM","evnum":"","name":"$240 NLH Turbo Satellite","loc":"ARIA","type":"Satellite","buyin":240.0,"gtd":"5 Seats","feeds":"→ $1,600 NLH"},
+{"date":"2026-07-09","time":"12:00 PM","evnum":"","name":"$1,600 NLH","loc":"ARIA","type":"Tournament","buyin":1600.0,"gtd":"$500K GTD","feeds":""},
+{"date":"2026-07-09","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// July 10
+{"date":"2026-07-10","time":"11:00 AM","evnum":"","name":"$1,100 NLH","loc":"ARIA","type":"Tournament","buyin":1100.0,"gtd":"$250K GTD","feeds":""},
+{"date":"2026-07-10","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// July 11
+{"date":"2026-07-11","time":"11:00 AM","evnum":"","name":"$1,100 PLO Mystery Bounty","loc":"ARIA","type":"Tournament","buyin":1100.0,"gtd":"$250K GTD","feeds":""},
+{"date":"2026-07-11","time":"7:00 PM","evnum":"","name":"$300 NLH","loc":"ARIA","type":"Tournament","buyin":300.0,"gtd":"$25K GTD","feeds":""},
+// July 12
+{"date":"2026-07-12","time":"11:00 AM","evnum":"","name":"$800 NLH","loc":"ARIA","type":"Tournament","buyin":800.0,"gtd":"$100K GTD","feeds":""}
+];
+
+
+// ── Event Picker ─────────────────────────────────
+function getEventsForDate(dateStr) {
+  return SCHEDULE.filter(e => e.date === dateStr);
+}
+
+function onDateChange() {
+  const dateStr = document.getElementById("f-date").value;
+  const events  = getEventsForDate(dateStr);
+  const picker  = document.getElementById("event-picker");
+  const pickerWrap = document.getElementById("event-picker-wrap");
+  const sel     = document.getElementById("event-select");
+
+  // Clear old options
+  sel.innerHTML = '<option value="">— browse & pick an event —</option>';
+
+  if (events.length === 0) {
+    pickerWrap.style.display = "none";
+    return;
+  }
+
+  pickerWrap.style.display = "block";
+  events.forEach((e, i) => {
+    const opt = document.createElement("option");
+    opt.value = i;
+    const buyin = e.buyin ? " · $" + e.buyin.toLocaleString() : "";
+    const evnum = e.evnum ? " #" + e.evnum : "";
+    const sat   = e.type === "Satellite" ? " [SAT]" : (e.type === "Double Board PLO" ? " [PLO]" : "");
+    opt.textContent = e.time + "  " + e.loc + sat + evnum + buyin + "  —  " + e.name;
+    opt.dataset.idx = i;
+    sel.appendChild(opt);
+  });
+}
+
+function onEventPick() {
+  const sel   = document.getElementById("event-select");
+  const idx   = sel.value;
+  if (idx === "") return;
+  const dateStr = document.getElementById("f-date").value;
+  const events  = getEventsForDate(dateStr);
+  const ev      = events[parseInt(idx)];
+  if (!ev) return;
+
+  document.getElementById("f-loc").value   = ev.loc;
+  document.getElementById("f-evnum").value = ev.evnum || "";
+  document.getElementById("f-type").value  = ev.type;
+  document.getElementById("f-name").value  = ev.name;
+  if (ev.buyin) {
+    document.getElementById("f-buyin").value = ev.buyin;
+    calcTotal();
+  }
+  // Show feeds-into if satellite
+  const feedsEl = document.getElementById("feeds-info");
+  if (ev.feeds) {
+    feedsEl.textContent = "Feeds into: " + ev.feeds;
+    feedsEl.style.display = "block";
+  } else {
+    feedsEl.style.display = "none";
+  }
+  // Show GTD if present
+  const gtdEl = document.getElementById("gtd-info");
+  if (ev.gtd) {
+    gtdEl.textContent = "Guarantee: " + ev.gtd;
+    gtdEl.style.display = "block";
+  } else {
+    gtdEl.style.display = "none";
+  }
+}
+
+// ── Init ──────────────────────────────────────────
+document.getElementById("f-date").value = today();
+onDateChange();
+updateTotalsBar();
+</script>
+</body>
+</html>
